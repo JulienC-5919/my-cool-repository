@@ -1,6 +1,7 @@
 package com.example.applications;
 
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +25,12 @@ public class TableauNotes extends Application {
         Button btnQuitter = new Button("Quitter");
         GridPane.setHalignment(btnQuitter, HPos.RIGHT);
         GridPane.setValignment(btnQuitter, VPos.BOTTOM);
+
+        TableColumn tcDA = new TableColumn("DA");
+        TableColumn tcExa1 = new TableColumn("Exa1");
+        TableColumn tcExa2 = new TableColumn("Exa2");
+        TableColumn tcTP1 = new TableColumn("TP1");
+        TableColumn tcTP2 = new TableColumn("TP1");
 
         GridPane gpAjouterNotes = new GridPane();
         HBox hbBoutons = new HBox(5);
@@ -55,6 +62,14 @@ public class TableauNotes extends Application {
         Button btnModifier = new Button("Modifier");
         Button btnSupprimmer = new Button("Supprimer");
 
+        tcDA.setPrefWidth(100);
+        tcExa1.setPrefWidth(100);
+        tcExa2.setPrefWidth(100);
+        tcTP1.setPrefWidth(100);
+        tcTP2.setPrefWidth(100);
+
+        tvNotes.getColumns().addAll(tcDA, tcExa1, tcExa2, tcTP1, tcTP2);
+
         hbBoutons.getChildren().add(btnAjouter);
         hbBoutons.getChildren().add(btnModifier);
         hbBoutons.getChildren().add(btnSupprimmer);
@@ -80,16 +95,19 @@ public class TableauNotes extends Application {
         tpComparaison.getChildren().add(labMoyenne);
         for (int i = 0; i < 4; i++) {
             txfMoyennes[i] = new TextField();
+            txfMoyennes[i].setEditable(false);
             tpComparaison.getChildren().add(txfMoyennes[i]);
         }
         tpComparaison.getChildren().add(labMinimum);
         for (int i = 0; i < 4; i++) {
             txfMinimums[i] = new TextField();
+            txfMinimums[i].setEditable(false);
             tpComparaison.getChildren().add(txfMinimums[i]);
         }
         tpComparaison.getChildren().add(labMaximum);
         for (int i = 0; i < 4; i++) {
             txfMaximums[i] = new TextField();
+            txfMaximums[i].setEditable(false);
             tpComparaison.getChildren().add(txfMaximums[i]);
         }
 
@@ -107,14 +125,12 @@ public class TableauNotes extends Application {
         root.setPrefWidth(Double.MAX_VALUE);
         root.setMaxWidth(Double.MAX_VALUE);
         vbOptions.setAlignment(Pos.TOP_RIGHT);
-        //vbOptions.setStyle("-fx-background-color: cornsilk;");
         GridPane.setFillWidth(vbOptions, true);
         GridPane.setHalignment(vbOptions, HPos.RIGHT);
 
         root.setPadding(new Insets(20));
         GridPane.setVgrow(tvNotes, Priority.ALWAYS);
         GridPane.setHgrow(tvNotes, Priority.ALWAYS);
-
 
         Scene scene = new Scene(root, 1000, 500);
         stage.setTitle("Notes");
