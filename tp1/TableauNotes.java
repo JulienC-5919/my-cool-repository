@@ -1,6 +1,7 @@
 package com.example.applications;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -9,14 +10,23 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
+
 public class TableauNotes extends Application {
+    GridPane root;
+    ObservableList<FeuilleResultat> resultats;
+    TextField txfDa;
+    TextField txfExa1;
+    TextField txfExa2;
+    TextField txfTp1;
+    TextField txfTp2;
     public void start(Stage stage){
-        GridPane root = new GridPane();
+        root = new GridPane();
         root.setHgap(200);
 
         TableView tvNotes = new TableView();
@@ -44,29 +54,40 @@ public class TableauNotes extends Application {
         TextField[] txfMaximums = new TextField[4];
 
         Label labDa = new Label("DA");
-        TextField txfDa = new TextField();
+        txfDa = new TextField();
 
-        Label labExam1 = new Label("Exam1");
-        TextField txfExam1 = new TextField();
+        Label labExam1 = new Label("Exa1");
+        txfExa1 = new TextField();
 
-        Label labExam2 = new Label("Exam2");
-        TextField txfExam2 = new TextField();
+        Label labExam2 = new Label("Exa2");
+        txfExa2 = new TextField();
 
         Label labTp1 = new Label("TP1");
-        TextField txfTp1 = new TextField();
+        txfTp1 = new TextField();
 
         Label labTp2 = new Label("TP2");
-        TextField txfTp2 = new TextField();
+        txfTp2 = new TextField();
+
+        resultats = FXCollections.observableArrayList();
+
+        tvNotes.setItems(resultats);
 
         Button btnAjouter = new Button("Ajouter");
         Button btnModifier = new Button("Modifier");
         Button btnSupprimmer = new Button("Supprimer");
 
+        tcDA.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Integer>("da"));
         tcDA.setPrefWidth(100);
+        tcExa1.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("exa1"));
         tcExa1.setPrefWidth(100);
+        tcExa2.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("exa2"));
         tcExa2.setPrefWidth(100);
+        tcTP1.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("tp1"));
         tcTP1.setPrefWidth(100);
+        tcTP2.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("tp2"));
         tcTP2.setPrefWidth(100);
+
+        btnAjouter.setOnAction(e -> ajouterResultat());
 
         tvNotes.getColumns().addAll(tcDA, tcExa1, tcExa2, tcTP1, tcTP2);
 
@@ -79,9 +100,9 @@ public class TableauNotes extends Application {
         gpAjouterNotes.add(labDa, 0, 0);
         gpAjouterNotes.add(txfDa, 1, 0);
         gpAjouterNotes.add(labExam1, 0, 1);
-        gpAjouterNotes.add(txfExam1,1 ,1);
+        gpAjouterNotes.add(txfExa1,1 ,1);
         gpAjouterNotes.add(labExam2, 0, 2);
-        gpAjouterNotes.add(txfExam2, 1, 2);
+        gpAjouterNotes.add(txfExa2, 1, 2);
         gpAjouterNotes.add(labTp1, 0, 3);
         gpAjouterNotes.add(txfTp1, 1, 3);
         gpAjouterNotes.add(labTp2, 0, 4);
@@ -140,6 +161,31 @@ public class TableauNotes extends Application {
         stage.show();
 
 
+    }
+
+    public void ajouterResultat() {
+        try {
+
+            resultats.add(new FeuilleResultat(
+                    Integer.parseInt(txfDa.getText()),
+                    Byte.parseByte(txfTp1.getText()),
+                    Byte.parseByte(txfTp2.getText()),
+                    Byte.parseByte(txfExa1.getText()),
+                    Byte.parseByte(txfExa2.getText())
+            ));
+
+        } catch (IllegalArgumentException e) {
+            Alert resultatInvalide = new Alert(Alert.AlertType.ERROR, "Nombre invalide");
+            resultatInvalide.show();
+            while (resultatInvalide.isShowing()) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            root.setDisable(true);
+        }
     }
 
     public static void main(String[] args) {
