@@ -1,0 +1,7 @@
+Debian─┐
+       ├─Installation
+       ├─Configuration pour le gaming -> graphique, steam
+       ├─Qu'est-ce que Debian? -> Créateurs, histoire, philo
+       ├─bash / Notions de base -> apt-get, sudo
+       ├─Installation de programmes Windows -> Steam / Wine
+       ├─Pare-Feu / Antivirus -> clamav
