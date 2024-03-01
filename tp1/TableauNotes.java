@@ -7,14 +7,13 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
+
 import javafx.stage.Stage;
+
 
 
 public class TableauNotes extends Application {
@@ -29,7 +28,7 @@ public class TableauNotes extends Application {
         root = new GridPane();
         root.setHgap(200);
 
-        TableView tvNotes = new TableView();
+        TableView<FeuilleResultat> tvNotes = new TableView<FeuilleResultat>();
         VBox vbOptions = new VBox(5);
         TilePane tpComparaison = new TilePane();
         Button btnQuitter = new Button("Quitter");
@@ -78,14 +77,24 @@ public class TableauNotes extends Application {
 
         tcDA.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Integer>("da"));
         tcDA.setPrefWidth(100);
+        tcDA.setResizable(false);
+        tcDA.setReorderable(false);
         tcExa1.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("exa1"));
         tcExa1.setPrefWidth(100);
+        tcExa1.setResizable(false);
+        tcExa1.setReorderable(false);
         tcExa2.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("exa2"));
         tcExa2.setPrefWidth(100);
+        tcExa2.setResizable(false);
+        tcExa2.setReorderable(false);
         tcTP1.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("tp1"));
         tcTP1.setPrefWidth(100);
+        tcTP1.setResizable(false);
+        tcTP1.setReorderable(false);
         tcTP2.setCellValueFactory(new PropertyValueFactory<FeuilleResultat, Byte>("tp2"));
         tcTP2.setPrefWidth(100);
+        tcTP2.setResizable(false);
+        tcTP2.setReorderable(false);
 
         btnAjouter.setOnAction(e -> ajouterResultat());
 
@@ -159,36 +168,31 @@ public class TableauNotes extends Application {
         stage.setMinWidth(1000);
         stage.setScene(scene);
         stage.show();
-
-
     }
 
     public void ajouterResultat() {
-        try {
 
+        try {
             resultats.add(new FeuilleResultat(
                     Integer.parseInt(txfDa.getText()),
-                    Byte.parseByte(txfTp1.getText()),
-                    Byte.parseByte(txfTp2.getText()),
                     Byte.parseByte(txfExa1.getText()),
-                    Byte.parseByte(txfExa2.getText())
+                    Byte.parseByte(txfExa2.getText()),
+                    Byte.parseByte(txfTp1.getText()),
+                    Byte.parseByte(txfTp2.getText())
             ));
 
-        } catch (IllegalArgumentException e) {
-            Alert resultatInvalide = new Alert(Alert.AlertType.ERROR, "Nombre invalide");
-            resultatInvalide.show();
-            while (resultatInvalide.isShowing()) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-            root.setDisable(true);
+            //todo Utils
+        }
+        catch (IllegalArgumentException e) {
+            Alert popup = new Alert(Alert.AlertType.ERROR, "La DA ou une des notes est invalide.");
+            popup.setHeaderText("Nombre invalide");
+            popup.showAndWait();
         }
     }
 
     public static void main(String[] args) {
         launch();
     }
+
+
 }
