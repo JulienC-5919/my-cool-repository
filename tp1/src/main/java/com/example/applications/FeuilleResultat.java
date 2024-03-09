@@ -1,5 +1,14 @@
 package com.example.applications;
 
+import javafx.application.Application;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+
 public class FeuilleResultat {
     private final int da;
     private byte tp1;
@@ -9,7 +18,7 @@ public class FeuilleResultat {
     public FeuilleResultat( int da, byte exa1, byte exa2, byte tp1, byte tp2) {
 
         if (da <= 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Le numéro de demande d'admission doit être un entier positif.");
         }
 
         this.da = da;
@@ -28,6 +37,7 @@ public class FeuilleResultat {
         }
 
         this.da = da;
+
         this.exa1 = 0;
         this.exa2 = 0;
         this.tp1 = 0;
@@ -37,7 +47,6 @@ public class FeuilleResultat {
     public int getDa() {
         return da;
     }
-
     public byte getTp1() {
         return tp1;
     }

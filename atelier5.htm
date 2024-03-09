@@ -1,25 +1,56 @@
 <!DOCTYPE html>
 <style>
+ul {
+background-color: lightgray;
+    ul {
+        background-color: silver;
+	list-style-type: none;
+	display: none;
+    }
+    :hover + ul{display: block;}
+}
 div {
     background-color: lightblue;
     width:50%;
     border-left: 20px solid darkblue;
     border-right: 20px solid darkblue;
+    display: flex;
+    flex-wrap:wrap;
+    align-items: center;
+    justify-content: center;
+    p {
+        width: 75%;
+        background-color: yellow;	
+    }
+    p::first-letter {
+        font-size: 32px;
+        color: red;
+    }
+    p::first-line {
+        color: green;
+        font-weight: bold;
+    }
+    
 }
 table {
     border-collapse: collapse;
     border-style: double;
     border-width: 5px;
-    border-color: black;
 }
+
 tr:nth-child(even) {
 background-color: lightgray;
 }
 tr:nth-child(1) {
-background-color: purple;
+th {
+height:20px;
+}
 }
 th {
 border-style: dotted;
+border-width: 1px;
+height: 50px;
+width: 100px;
 }
 </style>
 <html>
@@ -56,5 +87,18 @@ border-style: dotted;
         </tr>
 
 	<div>
-		<p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.</p>
+	    <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.</p>
+            <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.</p>
+
 	</div>
+	<ul>
+	    <li>Item 1</li>	
+            <ul>
+		<li>Sub Item 1</li>
+		<li>Sub Item 2</li>
+		<li>Sub Item 3</li>
+	    </ul>
+	    <li>Item 2</li>
+	    <li>Item 3</li>
+	    <li>Item 4</li>
+
