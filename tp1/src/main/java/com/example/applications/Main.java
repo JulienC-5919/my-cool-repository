@@ -258,14 +258,17 @@ public class Main extends Application {
             }
 
             if (aucuneErreur) {
-                try {
-                    tvNotes.getSelectionModel().select(Utils.insererEnOrdre(resultats, feuille));
+                if (Utils.isPresentCol(resultats, feuille.getDa())) {
+                    afficherErreur("Nombre invalide", "Cette DA existe déjà.");
+                }
+
+                else {
+                    resultats.add(feuille);
+                    Utils.quickSort(resultats);
+                    tvNotes.refresh();
 
                     calculerMoyennes();
-
                     effacerChamps();
-                } catch (IllegalArgumentException e) {
-                    afficherErreur("Nombre invalide", "Cette DA existe déjà.");
                 }
             }
         }
@@ -275,9 +278,12 @@ public class Main extends Application {
      *Supprime la rangée sélectionnée
      */
     private void supprimmerRangee() {
-        tvNotes.getItems().remove(tvNotes.getSelectionModel().getSelectedIndex());
-        calculerMoyennes();
-        effacerChamps();
+
+        if (tvNotes.getSelectionModel().getSelectedIndex() >= 0) {
+            resultats.remove(tvNotes.getSelectionModel().getSelectedIndex());
+            calculerMoyennes();
+            effacerChamps();
+        }
     }
 
     /**
@@ -321,7 +327,6 @@ public class Main extends Application {
      * Remplit les champs de texte lorsqu'une feuille de notes est sélectionnée
      */
     private void remplirChamps() {
-
         txfDa.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getDa()));
 
         txfExa1.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getExa1()));
@@ -330,17 +335,7 @@ public class Main extends Application {
         txfTp2.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getTp2()));
     }
 
-    /**
-     * Donne une liste de toutes les DA
-     * @return liste de DA
-     */
-    private int[] tableauDA() {
-        int[] tableau = new int[resultats.size()];
-        for (int i = 0; i < tableau.length; i++) {
-            tableau[i] = resultats.get(i).getDa();
-        }
-        return tableau;
-    }
+
 
     /**
      * Recherche le numéro de DA du champ de texte dans le tableau et le sélectionne si trouvé
@@ -351,8 +346,8 @@ public class Main extends Application {
 
         try {
             da = Integer.parseInt(txfDa.getText());
-            if (Utils.isPresentCol(tableauDA(), da)) {
-                tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(tableauDA(), da));
+            if (Utils.isPresentCol(resultats, da)) {
+                tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(Utils.tableauEntiersDA(resultats), da));
             }
         } catch (NumberFormatException ignored) {
         }

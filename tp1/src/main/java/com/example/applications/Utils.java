@@ -4,7 +4,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 
 
-class Utils {
+public class Utils {
+
+    /**
+     * Empêche la classe d'être instantiée
+     */
+    private Utils(){
+        throw new UnsupportedOperationException("Utils class is not instantiable");
+    }
 
     /**
      * Calcule la moyenne de tous les entiers sur une TableColumn
@@ -97,51 +104,22 @@ class Utils {
     }
 
     /**
-     * Insertion dichotomique d'une feuille de résultats dans une ObservableList, triée par DA
-     * @param liste ObservableList dans laquelle ajouter la nouvelle feuille de notes
-     * @param resultat feuille de notes à ajouter
-     * @return indice où la feuille de notes a été ajoutée
-     */
-    public static int insererEnOrdre(ObservableList<FeuilleResultat> liste, FeuilleResultat resultat) {
-        int positionMinimum = -1;
-        int positionMaximum = liste.size();
-        int centre = (positionMaximum + 1) / 2 - 1;
-
-        while (positionMaximum > positionMinimum + 1) {
-            if (resultat.getDa() < liste.get(centre).getDa()) {
-                positionMaximum = centre;
-            }
-            else if (resultat.getDa() > liste.get(centre).getDa()) {
-                positionMinimum = centre;
-            }
-            else {
-                throw new IllegalArgumentException("Cette DA existe déjà.");
-            }
-            centre = (positionMaximum - positionMinimum) / 2 + positionMinimum;
-        }
-
-        liste.add(positionMaximum, resultat);
-
-        return positionMaximum;
-    }
-
-    /**
      * Fait un quicksort d'un tableau d'entiers puis fait une fouille dichotomique pour voir si un élément est présent
      * @param tableau tableau à trier et fouiller
      * @param element élément à vérifier s'il est présent dans le tableau
      * @return true si l'élément est dans le tableau, false sinon.
      */
-    public static boolean isPresentCol(int[] tableau, int element) {
+    public static boolean isPresentCol(ObservableList<FeuilleResultat> tableau, int element) {
         quickSort(tableau);
-        return fouilleDichoCol(tableau, element) != -1;
+        return fouilleDichoCol(tableauEntiersDA(tableau), element) != -1;
     }
 
     /**
      * Trie un tableau d'entiers par l'algorithme quicksort
      * @param entiers tableau à trier
      */
-    public static void quickSort(int[] entiers) {
-        quickSort(entiers, 0, entiers.length - 1);
+    public static void quickSort(ObservableList<FeuilleResultat> entiers) {
+        quickSort(entiers, 0, entiers.size() - 1);
     }
 
     /**
@@ -150,17 +128,21 @@ class Utils {
      * @param debut indice du premier élément à trier
      * @param fin indice du dernier élément à trier
      */
-    public static void quickSort(int[] entiers, int debut, int fin) {
+    public static void quickSort(ObservableList<FeuilleResultat> entiers, int debut, int fin) {
         if (debut < fin) {
             boolean indexADeplacer = true; //true pour l'index 2, false pour l'index 1
             int index1 = debut;
             int index2 = fin;
 
+            FeuilleResultat tmp; //Emplacement temporaire pour échanger les feuilles de DA
+
             while (index1 != index2) {
-                if (entiers[index1] > entiers[index2]) {
-                    entiers[index1] ^= entiers[index2];
-                    entiers[index2] ^= entiers[index1];
-                    entiers[index1] ^= entiers[index2];
+                if (entiers.get(index1).getDa() > entiers.get(index2).getDa()) {
+
+                    tmp = entiers.get(index1);
+                    entiers.set(index1, entiers.get(index2));
+                    entiers.set(index2, tmp);
+
                     indexADeplacer = !indexADeplacer;
                 } else {
                     if (indexADeplacer) {
@@ -175,5 +157,17 @@ class Utils {
 
             quickSort(entiers, index2 + 1, fin);
         }
+    }
+
+    /**
+     * Donne une liste de toutes les DA
+     * @return liste de DA
+     */
+    public static int[] tableauEntiersDA(ObservableList<FeuilleResultat> resultats) {
+        int[] tableau = new int[resultats.size()];
+        for (int i = 0; i < tableau.length; i++) {
+            tableau[i] = resultats.get(i).getDa();
+        }
+        return tableau;
     }
 }
