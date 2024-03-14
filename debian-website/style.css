@@ -128,13 +128,4 @@ margin:0px;
 padding:0px;
 flex-wrap:wrap;
 }
-.texteaide::after {/*code copié de w3schools*/
-	content: "";
-	position: absolute;
-   	bottom: 100%;
-	left: 50%;
-        margin-left: -15px;
-	border-width: 15px;
-	border-style: solid;
-	border-color: transparent transparent black transparent;
-}
+

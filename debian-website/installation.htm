@@ -4,16 +4,20 @@
 		<link rel="stylesheet" href="style.css">
 		<title>Installer Debian</title>
 	</head>
+
 	<body>
 		<div id="barrehaut">
-			<a href="principale.htm"><img src="logo-nouveau.svg", alt="Logo DebPlus"></a>
+			<a href="principale.htm"><img src="images/logo-nouveau.svg", alt="Logo DebPlus"></a>
 		</div>
 		<div id="contenu">
 			<h1>Installer Debian</h1>
 			<hr>
 			<h2>Image d'installation</h2>
-			<p>Télécharger l'image d'installation à partir de <a href="https://www.debian.org">debian.org</a></p>
-			<p>Installer l'image disque sur une clé USB. Attention: Tous les fichiers sur la clé USB seront supprimés. Voici deux manières que je recommande pour installer l'image disque:</p>
+			<p>Télécharger l'image d'installation sur <a href="https://www.debian.org">debian.org</a></p>
+			<br>
+			<p>Installer l'image disque sur une clé USB.</p>
+			<p><img src= "avertissement.svg" alt=""> Attention: Tous les fichiers sur la clé USB seront supprimés.</p><p>
+			Voici deux manières que je recommande pour installer l'image disque:</p>
 			<h3>Par ligne de commande (Linux seulement*)</h3>
 			<p>Dans la ligne de commande, entrer # <span class="commande">dd if=CHEMIN/D'ACCÈS/DE/L'IMAGE of=/dev/sdX bs=4M</span> en tant que root.</p>
 			<div class="texteavecaide">
@@ -32,6 +36,10 @@
 				</div>
 				<p>&nbsp;va après «of=»</p>
 			</div>
+			<p><img src="avertissement.svg" alt=""> Attention: Asurez-vous d'avoir bien entré le nom de la clé USB. Entrer le nom d'un disque dur de l'ordinateur détruira son contenu.</p>
+			<p>Faire la commande $ <span class="commande">lsblk</span> pourrait vous aider à trouver le bon nom.</p>
+			<h3>Avec Etcher:</h3>
+			<p>Télécharger Etcher sur <a href="https://etcher.balena.io/">etcher.balena.io</a> puis l'installer.
 		</div>
 		<div id="menucote"></div>
 		<div id="deplacementrapide"></div>
