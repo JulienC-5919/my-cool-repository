@@ -17,12 +17,12 @@ body {
 	background-repeat: no-repeat;
 	background-attachment: fixed;
 	margin-top: 150px;
+	div {
+        	background-color: midnightblue;#
+		margin: 20px;
+	}
 }
-div {
-        background-color: midnightblue;
 
-	margin: 20px;
-}
 #contenu {
 	width: min(1200px,80vw);
 	margin-left: auto;
@@ -87,7 +87,6 @@ p {
 }
 h1 {
 	color: white;
-	/*font-family:sans-serif;*/
 	font-size:60px;
 	text-align:center;
 }
@@ -105,10 +104,11 @@ h3 {
 .commande {
 	background-color:black;
 	font-family:monospace;
-	font-size: 20px;
+	font-size: 16px;
 }
 .aide {
 	text-decoration: underline;
+	text-decoration-color:white;
 	margin:0px;
 	padding:0px;
 }
@@ -116,7 +116,8 @@ h3 {
 	background-color:black;
 	visibility:hidden;
 	position:absolute;
-	p {white-space:nowrap;}
+	max-width:300px;
+	padding: 10px;
 }
 .aide:hover .texteaide{
 visibility:visible
@@ -126,4 +127,14 @@ display:flex;
 margin:0px;
 padding:0px;
 flex-wrap:wrap;
+}
+.texteaide::after {/*code copié de w3schools*/
+	content: "";
+	position: absolute;
+   	bottom: 100%;
+	left: 50%;
+        margin-left: -15px;
+	border-width: 15px;
+	border-style: solid;
+	border-color: transparent transparent black transparent;
 }

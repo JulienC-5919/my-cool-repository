@@ -15,15 +15,20 @@
 			<p>Télécharger l'image d'installation à partir de <a href="https://www.debian.org">debian.org</a></p>
 			<p>Installer l'image disque sur une clé USB. Attention: Tous les fichiers sur la clé USB seront supprimés. Voici deux manières que je recommande pour installer l'image disque:</p>
 			<h3>Par ligne de commande (Linux seulement*)</h3>
-			<p>Dans la ligne de commande, entrer #<span class="commande">dd if=CHEMIN/D'ACCÈS/DE/L'IMAGE of=/dev/sdX bs=4M</span> en tant que root.</p>
+			<p>Dans la ligne de commande, entrer # <span class="commande">dd if=CHEMIN/D'ACCÈS/DE/L'IMAGE of=/dev/sdX bs=4M</span> en tant que root.</p>
 			<div class="texteavecaide">
 				<p>Le&nbsp;</p>
 				<div class="aide">
-					<p>chemin d'accès de l'image</p>
+					<p>chemin d'accès de l'image*</p>
+					<div class="texteaide"><p>Normalement, l'image disque de Debian se trouve dans Téléchargements/ et a un nom semblable à <br>debian-XX.X.X-amd64-netinst.iso</p></div>
 				</div>
-				<p>&nbsp;va après «if=» et l'</p> 
+				<p>&nbsp;va après «if=» et le&nbsp;</p>	
 				<div class="aide">
-					<p>identifiant de la clé USB</p>
+					<p>nom de la clé USB*</p>
+					<div class=texteaide>
+						<p>Dans les systèmes linux, les clés USB, disques durs et autres appareils de stockage sont dans le répertoire /dev/ et leur nom est «sd» suivi d'une lettre.</p>
+						<p>/dev/sdb et /dev/sdc sont des noms possibles pour la clé USB.</p>
+						<p>Attention: les noms qui se terminent par un nombre (/dev/sdb1, /dev/sdb2) sont des partitions. Installer l'image disque sur une partition ne fonctionnera pas.</div>
 				</div>
 				<p>&nbsp;va après «of=»</p>
 			</div>
