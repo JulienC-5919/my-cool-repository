@@ -24,7 +24,7 @@ div {
 	margin: 20px;
 }
 #contenu {
-	width: 1200px;
+	width: min(1200px,80vw);
 	margin-left: auto;
 	margin-right: auto;
 	background-color:midnightblue;
@@ -98,4 +98,32 @@ h2 {
 	color: white;
 	font-size: 30px;
 }
-li {color:white;}
+h3 {
+	color:white;
+	padding-top:40px;
+}
+.commande {
+	background-color:black;
+	font-family:monospace;
+	font-size: 20px;
+}
+.aide {
+	text-decoration: underline;
+	margin:0px;
+	padding:0px;
+}
+.texteaide {
+	background-color:black;
+	visibility:hidden;
+	position:absolute;
+	p {white-space:nowrap;}
+}
+.aide:hover .texteaide{
+visibility:visible
+}
+.texteavecaide {
+display:flex;
+margin:0px;
+padding:0px;
+flex-wrap:wrap;
+}
