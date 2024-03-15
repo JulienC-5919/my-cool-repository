@@ -10,19 +10,14 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class FeuilleResultat {
-    private final int da;
+    private  int da;
     private byte tp1;
     private byte tp2;
     private byte exa1;
     private byte exa2;
     public FeuilleResultat( int da, byte exa1, byte exa2, byte tp1, byte tp2) {
 
-        if (da <= 0) {
-            throw new IllegalArgumentException("Le numéro de demande d'admission doit être un entier positif.");
-        }
-
-        this.da = da;
-
+        setDa(da);
         setExa1(exa1);
         setExa2(exa2);
         setTp1(tp1);
@@ -36,14 +31,13 @@ public class FeuilleResultat {
             throw new IllegalArgumentException("Le numéro de demande d'admission doit être un entier positif.");
         }
 
-        this.da = da;
+        this.da = 0;
 
         this.exa1 = 0;
         this.exa2 = 0;
         this.tp1 = 0;
         this.tp2 = 0;
     }
-
     public int getDa() {
         return da;
     }
@@ -60,6 +54,12 @@ public class FeuilleResultat {
         return exa2;
     }
 
+    public void setDa(int da) {
+        if (da <= 0) {
+            throw new IllegalArgumentException("Le numéro de demande d'admission doit être un entier positif.");
+        }
+        this.da = da;
+    }
     public void setTp1(byte tp1) {
         if (tp1 < 0 || tp1 > 100) {
             throw new IllegalArgumentException("La note du travail pratique 1 doit être entre 0 et 100.");

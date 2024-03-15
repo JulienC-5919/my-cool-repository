@@ -14,9 +14,7 @@ import javafx.scene.layout.*;
 
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Scanner;
 
 
@@ -145,7 +143,7 @@ public class Main extends Application {
         btnSupprimmer.setOnAction(e -> supprimmerRangee());
         btnQuitter.setOnAction(e -> demanderSauvegarder(stage));
 
-        txfDa.textProperty().addListener(e -> rechercherDa());
+        //txfDa.textProperty().addListener(e -> rechercherDa());
 
         tvNotes.getSelectionModel().selectedIndexProperty().addListener(e -> remplirChamps());
 
@@ -216,7 +214,7 @@ public class Main extends Application {
 
         ////////////////////////////////////////////////DÉMARRAGE///////////////////////////////////////////////////////
 
-        chargerNotes();
+        chargerNotes2();
 
         Scene scene = new Scene(root, 1000, 500);
         stage.setTitle("Julien Clermont 2268130");
@@ -224,6 +222,8 @@ public class Main extends Application {
         stage.setMinWidth(1000);
         stage.setScene(scene);
         stage.show();
+
+        System.out.println(tcDA.getCellData(1).toString());
     }
 
     /**
@@ -303,23 +303,56 @@ public class Main extends Application {
     private void modifierRangee() {
         FeuilleResultat feuille; //feuille où il faut changer les résultats
         int indexFeuille = tvNotes.getSelectionModel().getSelectedIndex(); //Index de la feuille de résultats à modifier
+        boolean bonneDa = true;// Si la nouvelle DA est valide
+
+        int da = 0; //numéro de DA
 
         if (indexFeuille != -1) {
-            feuille = tvNotes.getItems().get(indexFeuille);
+
+            feuille = tvNotes.getItems().get(indexFeuille); //feuille à modifier
+
 
             try {
-                feuille.setExa1(Byte.parseByte(txfExa1.getText()));
-                feuille.setExa1(Byte.parseByte(txfExa2.getText()));
-                feuille.setExa1(Byte.parseByte(txfTp1.getText()));
-                feuille.setExa1(Byte.parseByte(txfTp2.getText()));
-
-                calculerMoyennes();
-            } catch (IllegalArgumentException e) {
+                if (Utils.isPresentCol(resultats, da)) {
+                    afficherErreur(
+                            "Nombre invalide",
+                            "Cette DA existe déjà."
+                    );
+                    bonneDa = false;
+                }
+                else {
+                da = Integer.parseInt(txfDa.getText());
+                feuille.setDa(da);
+                }
+            }
+            catch (IllegalArgumentException e) {
                 afficherErreur(
                         "Nombre invalide",
-                        "Les notes des TP et examens doivent être entre 0 et 100."
+                        "La DA doit être un entier positif."
                 );
+                bonneDa = false;
             }
+            if (bonneDa) {
+                try {
+                   feuille.setExa1(Byte.parseByte(txfExa1.getText()));
+                   feuille.setExa2(Byte.parseByte(txfExa2.getText()));
+                   feuille.setTp1(Byte.parseByte(txfTp1.getText()));
+                   feuille.setTp2(Byte.parseByte(txfTp2.getText()));
+
+
+                   Utils.quickSort(resultats);
+                   calculerMoyennes();
+                   tvNotes.refresh();
+                   tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(Utils.tableauEntiersDA(resultats), da));
+
+                } catch (IllegalArgumentException e) {
+                    afficherErreur(
+                           "Nombre invalide",
+                           "Les notes des TP et examens doivent être entre 0 et 100."
+                    );
+                }
+            }
+
         }
     }
 
@@ -327,31 +360,19 @@ public class Main extends Application {
      * Remplit les champs de texte lorsqu'une feuille de notes est sélectionnée
      */
     private void remplirChamps() {
+        if (tvNotes.getSelectionModel().getSelectedIndex() > 0) {
         txfDa.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getDa()));
 
         txfExa1.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getExa1()));
         txfExa2.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getExa2()));
         txfTp1.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getTp1()));
         txfTp2.setText(String.valueOf(resultats.get(tvNotes.getSelectionModel().getSelectedIndex()).getTp2()));
-    }
-
-
-
-    /**
-     * Recherche le numéro de DA du champ de texte dans le tableau et le sélectionne si trouvé
-     */
-    private void rechercherDa() {
-
-        int da;
-
-        try {
-            da = Integer.parseInt(txfDa.getText());
-            if (Utils.isPresentCol(resultats, da)) {
-                tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(Utils.tableauEntiersDA(resultats), da));
-            }
-        } catch (NumberFormatException ignored) {
         }
     }
+
+
+
+
 
     private void calculerMoyennes() {
         if (resultats.isEmpty()) {
@@ -496,6 +517,42 @@ public class Main extends Application {
      */
     public static void main(String[] args) {
         launch();
+    }
+
+    private void chargerNotes2() {
+        BufferedReader lecteur;
+        FeuilleResultat feuille; //Feuille de résultats à construire à partir d'une ligne du fichier notes.txt
+
+        String[] nombres; //Ligne du fichier notes.txt à ajouter
+        String ligne; //Ligne à lire
+
+        try {
+            lecteur = new BufferedReader(new FileReader("notes.txt"));
+
+            while ((ligne=lecteur.readLine()) != null) {
+
+                nombres = ligne.split(" ");
+
+                feuille = new FeuilleResultat(
+                        Integer.parseInt(nombres[0]),
+                        Byte.parseByte(nombres[1]),
+                        Byte.parseByte(nombres[2]),
+                        Byte.parseByte(nombres[3]),
+                        Byte.parseByte(nombres[4])
+                );
+                resultats.add(feuille);
+            }
+
+            lecteur.close();
+
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException | IOException e) {
+
+            afficherErreur(
+                    "Fichier notes.txt corrompu",
+                    "Les notes n'ont pas pu être chargées car \"notes.txt\" est illisible ou manquant"
+            );
+        }
+        calculerMoyennes();
     }
 
 }
