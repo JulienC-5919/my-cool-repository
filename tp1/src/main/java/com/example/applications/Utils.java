@@ -7,10 +7,10 @@ import javafx.scene.control.TableColumn;
 public class Utils {
 
     /**
-     * Empêche la classe d'être instantiée
+     * Empêche la classe d'être instanciée
      */
     private Utils(){
-        throw new UnsupportedOperationException("Utils class is not instantiable");
+        throw new UnsupportedOperationException("Cette classe ne peut pas être instanciée");
     }
 
     /**

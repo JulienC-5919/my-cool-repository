@@ -56,7 +56,7 @@ public class Main extends Application {
         tcExa1 = new TableColumn("Exa1");
         tcExa2 = new TableColumn("Exa2");
         tcTP1 = new TableColumn("TP1");
-        tcTP2 = new TableColumn("TP1");
+        tcTP2 = new TableColumn("TP2");
 
         GridPane gpAjouterNotes = new GridPane();
         HBox hbBoutons = new HBox(5);
@@ -214,7 +214,7 @@ public class Main extends Application {
 
         ////////////////////////////////////////////////DÉMARRAGE///////////////////////////////////////////////////////
 
-        chargerNotes2();
+        chargerNotes();
 
         Scene scene = new Scene(root, 1000, 500);
         stage.setTitle("Julien Clermont 2268130");
@@ -222,8 +222,6 @@ public class Main extends Application {
         stage.setMinWidth(1000);
         stage.setScene(scene);
         stage.show();
-
-        System.out.println(tcDA.getCellData(1).toString());
     }
 
     /**
@@ -284,6 +282,10 @@ public class Main extends Application {
             calculerMoyennes();
             effacerChamps();
         }
+
+        else {
+            afficherErreur("Aucun résultat sélectionné", "Veuillez sélectionner une colonne à supprimer.");
+        }
     }
 
     /**
@@ -307,52 +309,59 @@ public class Main extends Application {
 
         int da = 0; //numéro de DA
 
-        if (indexFeuille != -1) {
+        if (indexFeuille >= 0) {
 
             feuille = tvNotes.getItems().get(indexFeuille); //feuille à modifier
 
+            if (Utils.isPresentCol(resultats, feuille.getDa())) {
+                afficherErreur("Nombre invalide", "Cette DA existe déjà.");
+            }
 
-            try {
-                if (Utils.isPresentCol(resultats, da)) {
+            else {
+
+                try {
+                    if (Utils.isPresentCol(resultats, da)) {
+                        afficherErreur(
+                                "Nombre invalide",
+                                "Cette DA existe déjà."
+                        );
+                        bonneDa = false;
+                    } else {
+                        da = Integer.parseInt(txfDa.getText());
+                        feuille.setDa(da);
+                    }
+                } catch (IllegalArgumentException e) {
                     afficherErreur(
                             "Nombre invalide",
-                            "Cette DA existe déjà."
+                            "La DA doit être un entier positif."
                     );
                     bonneDa = false;
                 }
-                else {
-                da = Integer.parseInt(txfDa.getText());
-                feuille.setDa(da);
-                }
-            }
-            catch (IllegalArgumentException e) {
-                afficherErreur(
-                        "Nombre invalide",
-                        "La DA doit être un entier positif."
-                );
-                bonneDa = false;
-            }
-            if (bonneDa) {
-                try {
-                   feuille.setExa1(Byte.parseByte(txfExa1.getText()));
-                   feuille.setExa2(Byte.parseByte(txfExa2.getText()));
-                   feuille.setTp1(Byte.parseByte(txfTp1.getText()));
-                   feuille.setTp2(Byte.parseByte(txfTp2.getText()));
+                if (bonneDa) {
+                    try {
+                        feuille.setExa1(Byte.parseByte(txfExa1.getText()));
+                        feuille.setExa2(Byte.parseByte(txfExa2.getText()));
+                        feuille.setTp1(Byte.parseByte(txfTp1.getText()));
+                        feuille.setTp2(Byte.parseByte(txfTp2.getText()));
 
 
-                   Utils.quickSort(resultats);
-                   calculerMoyennes();
-                   tvNotes.refresh();
-                   tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(Utils.tableauEntiersDA(resultats), da));
+                        Utils.quickSort(resultats);
+                        calculerMoyennes();
+                        tvNotes.refresh();
+                        tvNotes.getSelectionModel().select(Utils.fouilleDichoCol(Utils.tableauEntiersDA(resultats), da));
 
-                } catch (IllegalArgumentException e) {
-                    afficherErreur(
-                           "Nombre invalide",
-                           "Les notes des TP et examens doivent être entre 0 et 100."
-                    );
+                    } catch (IllegalArgumentException e) {
+                        afficherErreur(
+                                "Nombre invalide",
+                                "Les notes des TP et examens doivent être entre 0 et 100."
+                        );
+                    }
                 }
             }
 
+        }
+        else {
+            afficherErreur("Aucun résultat sélectionné", "Veuillez sélectionner une colonne à modifier.");
         }
     }
 
@@ -370,10 +379,9 @@ public class Main extends Application {
         }
     }
 
-
-
-
-
+    /**
+     * Calcule les moyennes, minimums et maximums des examens et travaux pratiques puis les affiche dans des TextFields.
+     */
     private void calculerMoyennes() {
         if (resultats.isEmpty()) {
             for (int i = 0; i < 4; i++) {
@@ -408,45 +416,38 @@ public class Main extends Application {
     }
 
     /**
-     * Affiche un popup d'erreur puur un nombre invalide
-     * @param message message d'erreur
-     */
-    private void afficherErreur(String enTete, String message) {
-        Alert popup = new Alert(Alert.AlertType.ERROR, message);
-        popup.setHeaderText(enTete);
-        popup.showAndWait();
-    }
-
-    /**
      * Charge les notes du fichier notes.txt dans le tableau
      */
     private void chargerNotes() {
-        File fichierNotes = new File("notes.txt");
-        Scanner scan;
+        BufferedReader bufferedReader;
+        FileReader lecteur;
         FeuilleResultat feuille; //Feuille de résultats à construire à partir d'une ligne du fichier notes.txt
 
-        String[] ligne; //Ligne du fichier notes.txt à ajouter
+        String[] nombres; //Ligne du fichier notes.txt à ajouter
+        String ligne; //Ligne à lire
 
         try {
-            scan = new Scanner(fichierNotes);
+            lecteur = new FileReader("notes.txt");
+            bufferedReader = new BufferedReader(lecteur);
 
-            while (scan.hasNextLine()) {
+            while ((ligne=bufferedReader.readLine()) != null) {
 
-                ligne = scan.nextLine().split(" ");
+                nombres = ligne.split(" ");
 
                 feuille = new FeuilleResultat(
-                        Integer.parseInt(ligne[0]),
-                        Byte.parseByte(ligne[1]),
-                        Byte.parseByte(ligne[2]),
-                        Byte.parseByte(ligne[3]),
-                        Byte.parseByte(ligne[4])
+                        Integer.parseInt(nombres[0]),
+                        Byte.parseByte(nombres[1]),
+                        Byte.parseByte(nombres[2]),
+                        Byte.parseByte(nombres[3]),
+                        Byte.parseByte(nombres[4])
                 );
                 resultats.add(feuille);
             }
 
-            scan.close();
+            bufferedReader.close();
+            lecteur.close();
 
-        } catch (FileNotFoundException | ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException | IOException e) {
 
             afficherErreur(
                     "Fichier notes.txt corrompu",
@@ -454,6 +455,34 @@ public class Main extends Application {
             );
         }
         calculerMoyennes();
+    }
+
+    /**
+     * Sauvegarde les notes du tableau dans le fichier notes.txt
+     */
+    private void sauvegarderNotes() {
+        FileWriter writer;
+        BufferedWriter buffWriter;
+        try {
+            writer = new FileWriter("notes.txt");
+            buffWriter = new BufferedWriter(writer);
+
+            for (FeuilleResultat resultat : resultats) {
+                buffWriter.write(
+
+                        resultat.getDa() + " " +
+                                resultat.getExa1() + " " +
+                                resultat.getExa2() + " " +
+                                resultat.getTp1() + " " +
+                                resultat.getTp2() + "\n"
+                );
+            }
+
+            buffWriter.close();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -487,28 +516,13 @@ public class Main extends Application {
     }
 
     /**
-     * Sauvegarde les notes du tableau dans le fichier notes.txt
+     * Affiche un popup d'erreur puur un nombre invalide
+     * @param message message d'erreur
      */
-    public void sauvegarderNotes() {
-        try {
-            PrintWriter printWriter = new PrintWriter(new File("notes.txt"));
-
-            for (FeuilleResultat resultat : resultats) {
-                printWriter.println(
-
-                        resultat.getDa() + " " +
-                        resultat.getExa1() + " " +
-                        resultat.getExa2() + " " +
-                        resultat.getTp1() + " " +
-                        resultat.getTp2() + " "
-                );
-            }
-
-            printWriter.close();
-
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    private void afficherErreur(String enTete, String message) {
+        Alert popup = new Alert(Alert.AlertType.ERROR, message);
+        popup.setHeaderText(enTete);
+        popup.showAndWait();
     }
 
     /**
@@ -518,41 +532,4 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch();
     }
-
-    private void chargerNotes2() {
-        BufferedReader lecteur;
-        FeuilleResultat feuille; //Feuille de résultats à construire à partir d'une ligne du fichier notes.txt
-
-        String[] nombres; //Ligne du fichier notes.txt à ajouter
-        String ligne; //Ligne à lire
-
-        try {
-            lecteur = new BufferedReader(new FileReader("notes.txt"));
-
-            while ((ligne=lecteur.readLine()) != null) {
-
-                nombres = ligne.split(" ");
-
-                feuille = new FeuilleResultat(
-                        Integer.parseInt(nombres[0]),
-                        Byte.parseByte(nombres[1]),
-                        Byte.parseByte(nombres[2]),
-                        Byte.parseByte(nombres[3]),
-                        Byte.parseByte(nombres[4])
-                );
-                resultats.add(feuille);
-            }
-
-            lecteur.close();
-
-        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException | IOException e) {
-
-            afficherErreur(
-                    "Fichier notes.txt corrompu",
-                    "Les notes n'ont pas pu être chargées car \"notes.txt\" est illisible ou manquant"
-            );
-        }
-        calculerMoyennes();
-    }
-
 }

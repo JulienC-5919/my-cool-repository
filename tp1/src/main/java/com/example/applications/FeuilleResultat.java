@@ -31,7 +31,7 @@ public class FeuilleResultat {
             throw new IllegalArgumentException("Le numéro de demande d'admission doit être un entier positif.");
         }
 
-        this.da = 0;
+        this.da = da;
 
         this.exa1 = 0;
         this.exa2 = 0;
