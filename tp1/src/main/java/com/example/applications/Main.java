@@ -15,8 +15,6 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.*;
-import java.util.Scanner;
-
 
 public class Main extends Application {
     ObservableList<FeuilleResultat> resultats;
