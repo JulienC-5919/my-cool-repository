@@ -1,0 +1,40 @@
+body {
+	background-image: linear-gradient(black,indigo,black);
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	margin-top: 150px;
+	div {
+        	background-color: midnightblue;#
+		margin: 20px;
+	}
+}
+
+/* Menu de liens qui mènent ailleurs sur le même site */
+.menu {
+	a{ 
+	margin: 20px;
+	margin-left: auto;
+	margin-right: auto;
+	color: white;
+	background-image: linear-gradient(to right,mediumblue,slateblue,mediumblue);
+	display: block;	
+	text-align: center;
+	text-decoration: none;
+	font-family: sans-serif;
+	}
+	a:hover {
+	background-image: linear-gradient(to right,blue,steelblue,blue);
+  }
+}
+
+p {
+	color: white;
+	font-family:sans-serif;
+}
+a {
+color:aqua;
+}
+a:visited {
+color:magenta;
+}
+
