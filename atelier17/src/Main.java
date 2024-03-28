@@ -3,6 +3,7 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         testsArrayLists();
+        testsHashSets();
         testsHashMaps();
     }
 
@@ -46,7 +47,7 @@ public class Main {
         displayPair(arrayListEntiers);
     }
 
-    private static void testsHashMaps() {
+    private static void testsHashSets() {
         HashSet<String> setCouleurs1;
         String[] tabCouleurs1;
         ArrayList<String> listCouleurs1;
@@ -82,12 +83,42 @@ public class Main {
         setCouleurs2.add("Jaune");
         System.out.println(setCouleurs2);
 
-        setCouleurs2.iterator().forEachRemaining(couleur -> {
-            if (!setCouleurs1.contains(couleur)) {
-                setCouleurs2.remove(couleur);
-            }
+        setCouleurs1.retainAll(setCouleurs2);
+        System.out.println(setCouleurs1);
+
+        setCouleurs1.clear();
+    }
+
+    private static void testsHashMaps() {
+        HashMap<Integer, String> mapEmpld = new HashMap<Integer, String >();
+        mapEmpld.put(123, "Jean");
+        mapEmpld.put(456, "Marie");
+        mapEmpld.put(789, "Paul");
+        System.out.println(mapEmpld);
+
+        System.out.println(mapEmpld.get(456));
+
+        mapEmpld.putIfAbsent(111, "Julie");
+        mapEmpld.putIfAbsent(456, "Toto");
+        System.out.println(mapEmpld);
+
+        mapEmpld.replace(456, "MarieJo");
+
+        if (mapEmpld.get(789).equals("Paul")) {
+            mapEmpld.replace(789, "Toto");
+            System.out.println(mapEmpld);
+        }
+
+        verifierPresence(mapEmpld, "Toto");
+        verifierPresence(mapEmpld, "Pierre");
+
+        mapEmpld.forEach((numero, nom) -> {
+            System.out.println(numero + "=" + nom);
         });
-        System.out.println(setCouleurs2);
+
+        mapEmpld.forEach((numero, nom) -> {
+            System.out.println("L'employé " + nom + "a le no: " + numero);
+        });
     }
 
     private static void displayIndexImpair(ArrayList arrayList) {
@@ -104,5 +135,14 @@ public class Main {
             }
         });
         System.out.println();
+    }
+
+    private static void verifierPresence(HashMap<Integer, String> hashMap, String nom) {
+        if (hashMap.containsValue(nom)) {
+            System.out.println(nom + " est présent.");
+        }
+        else {
+            System.out.println(nom + "n'est pas présent.");
+        }
     }
 }
