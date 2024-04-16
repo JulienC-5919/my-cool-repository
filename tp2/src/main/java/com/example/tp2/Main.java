@@ -3,11 +3,10 @@ package com.example.tp2;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -15,9 +14,10 @@ import java.io.IOException;
 public class Main extends Application {
 
 
-    TableView tvObjets;
+    TableView<Objet> tvObjets;
 
-    FlowPane barreOutils;
+    HBox barreOutils;
+    VBox barreHaut;
 
     TextField txfRecherche;
 
@@ -27,6 +27,8 @@ public class Main extends Application {
     public void start(Stage stage) throws IOException {
         //genererTableView();
         genererBarreOutils();
+        genererBarreHaut();
+        genererTableau();
         BorderPane root = new BorderPane();
 
         root.setTop(barreOutils);
@@ -42,16 +44,16 @@ public class Main extends Application {
     }
 
     private void genererBarreOutils() {
-        barreOutils = new FlowPane();
+        barreOutils = new HBox();
 
-        barreOutils.setHgap(5);
+        barreOutils.setSpacing(5);
 
-        Button btnAjouterObjet = new Button();
-        Button btnSupprimerObjet = new Button();
+        Button btnAjouterObjet = new Button("➕");
+        Button btnSupprimerObjet = new Button("➖");
 
-        ToggleButton tbtnOutil = new ToggleButton();
-        ToggleButton tbtnLivre = new ToggleButton();
-        ToggleButton tbtnJeu = new ToggleButton();
+        ToggleButton tbtnOutil = new ToggleButton("\uD83D\uDD27");
+        ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
+        ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
 
         ChoiceBox<String> choixEtat = new ChoiceBox<String>();
         choixEtat.getItems().addAll("Tous", "En possession", "Prêté", "Perdu");
@@ -63,5 +65,14 @@ public class Main extends Application {
                 btnAjouterObjet, btnSupprimerObjet, new Separator(Orientation.VERTICAL), tbtnOutil, tbtnLivre, tbtnJeu,
                 new Separator(Orientation.VERTICAL), new Label("Filtre"), choixEtat, txfRecherche
         );
+    }
+
+    private void genererBarreHaut() {
+        barreHaut = new VBox();
+        //todo fichier
+    }
+
+    private void genererTableau() {
+        tvObjets
     }
 }
