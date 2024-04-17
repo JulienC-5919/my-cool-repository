@@ -34,7 +34,7 @@ public class Main extends Application {
         root.setTop(barreOutils);
 
         Scene scene = new Scene(root, 320, 240);
-        stage.setTitle("Hello!");
+        stage.setTitle("2268130 TP2");
         stage.setScene(scene);
         stage.show();
     }
@@ -73,6 +73,6 @@ public class Main extends Application {
     }
 
     private void genererTableau() {
-        tvObjets
+        //todo tvObjets
     }
 }
