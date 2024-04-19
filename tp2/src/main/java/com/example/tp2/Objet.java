@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 
 public abstract class Objet {
-
+    public static enum etat {EN_POSSESSION, PRETE, PERDU}
 
 
     private String nom;
@@ -14,23 +14,23 @@ public abstract class Objet {
     private LocalDate dateAchat;
     //private image facture
     private String emplacement;
-    String etat;
+    private static String etat;
 
     protected void setNom(String nom) {
         this.nom = nom;
     }
-    protected String getNom() {
+    public String getNom() {
         return nom;
     }
 
     protected void setPrix(String prix) {
         this.prix = prix;
     }
-    protected String getPrix() {
+    public String getPrix() {
         return prix;
     }
 
-    protected LocalDate getDateAchat() {
+    public LocalDate getDateAchat() {
         return dateAchat;
     }
 
@@ -44,23 +44,23 @@ public abstract class Objet {
         }
         this.quantite = quantite;
     }
-    protected int getQuantite() {
+    public int getQuantite() {
         return quantite;
     }
 
     protected void setEmplacement(String emplacement) {
         this.emplacement = emplacement;
     }
-    protected String getEmplacement() {
+    public String getEmplacement() {
         return emplacement;
     }
     protected void setEtat(String etat) {
         this.etat = etat;
     }
-    protected String getEtat() {
+    public String getEtat() {
         return etat;
     }
 
-    protected abstract String getDescription();
+    public abstract String getDescription();
 
 }

@@ -4,7 +4,7 @@ public class Outil extends Objet {
     private int numeroSerie;
     private String marque;
 
-    @Override
+
     public String getDescription() {
         return "Marque " + marque + ", " + numeroSerie;
     }
