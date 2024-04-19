@@ -1,17 +1,20 @@
 package com.example.tp2;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+
 
 public abstract class Objet {
 
-    enum etats {EN_POSSESSION, PRETE, PREDU, BRISE}
+
+
     private String nom;
-    private BigDecimal prix;
+    private String prix;
     private int quantite;
-    //private date dateAchat
+    private LocalDate dateAchat;
     //private image facture
     private String emplacement;
-    etats etat;
+    String etat;
 
     protected void setNom(String nom) {
         this.nom = nom;
@@ -20,14 +23,19 @@ public abstract class Objet {
         return nom;
     }
 
-    protected void setPrix(BigDecimal prix) {
-        if (prix.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Le prix ne peut pas être négatif.");
-        }
+    protected void setPrix(String prix) {
         this.prix = prix;
     }
-    protected BigDecimal getPrix() {
+    protected String getPrix() {
         return prix;
+    }
+
+    protected LocalDate getDateAchat() {
+        return dateAchat;
+    }
+
+    protected void setDateAchat(LocalDate dateAchat) {
+        this.dateAchat = dateAchat;
     }
 
     protected void setQuantite(int quantite) {
@@ -46,10 +54,10 @@ public abstract class Objet {
     protected String getEmplacement() {
         return emplacement;
     }
-    protected void setEtat(etats etat) {
+    protected void setEtat(String etat) {
         this.etat = etat;
     }
-    protected etats getEtat() {
+    protected String getEtat() {
         return etat;
     }
 

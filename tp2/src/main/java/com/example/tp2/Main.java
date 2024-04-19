@@ -1,16 +1,24 @@
 package com.example.tp2;
 
 import javafx.application.Application;
+import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableArray;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.scene.control.TableColumn;
+
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 
 public class Main extends Application {
 
@@ -34,6 +42,8 @@ public class Main extends Application {
     DatePicker dpAchat;
     File facture;
 
+    ObservableList<Objet> objets = FXCollections.observableArrayList();
+
     public Main() {
 
 
@@ -42,7 +52,7 @@ public class Main extends Application {
         preparerBarreFichier();
         preparerBarreHaut();
 
-        preparerTableau();
+        preparerTableView();
 
         vbMenuGauche = new VBox();
         preparerChampsSectionGenerale();
@@ -55,6 +65,7 @@ public class Main extends Application {
         BorderPane root = new BorderPane();
 
         root.setTop(vbBarreHaut);
+        root.setLeft(tvObjets);
         root.setCenter(new Separator(Orientation.VERTICAL));
         root.setRight(vbMenuGauche);
 
@@ -146,9 +157,7 @@ public class Main extends Application {
         //gpSectionGenerale.add(ChoiceBoxEtat(), 1, 6);
     }
 
-    private void preparerTableau() {
-        //todo tvObjets
-    }
+
 
     private void preparerChampsSectionGenerale() {
         taNom = new TextField();
@@ -173,5 +182,26 @@ public class Main extends Application {
         gpSectionLivre.add(new Label("Maison d'édition:"), 0, 2);
         gpSectionLivre.add(new Label("Année d'écriture:"), 0, 3);
         gpSectionLivre.add(new Label("Année de publication:"), 0, 4);
+    }
+
+    private void preparerTableView() {
+        tvObjets = new TableView<Objet>();
+
+        TableColumn<Objet, String> tcNom = new TableColumn("Nom");
+        TableColumn<Objet, String> tcDescription = new TableColumn("Description");
+        //TableColumn<Objet> tcEtat = new TableColumn();
+        TableColumn<Objet, LocalDate> tcDateAchat = new TableColumn("Date d'achat");
+        TableColumn<Objet, String> tcPrix = new TableColumn("Prix");
+
+        tcNom.setCellValueFactory(new PropertyValueFactory<Objet, String>("nom"));
+        tcDescription.setCellValueFactory(new PropertyValueFactory<Objet, String>("description"));
+        tcDateAchat.setCellValueFactory(new PropertyValueFactory<Objet, LocalDate>("dateAchat"));
+        tcPrix.setCellValueFactory(new PropertyValueFactory<Objet, String>("prix"));
+
+        tvObjets.getColumns().addAll(tcNom, tcDescription, tcDateAchat, tcPrix);
+
+        tvObjets.setItems(objets);
+
+        Livre tmp = new Livre();
     }
 }
