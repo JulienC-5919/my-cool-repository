@@ -14,7 +14,7 @@ public abstract class Objet {
     private LocalDate dateAchat;
     //private image facture
     private String emplacement;
-    private static String etat;
+    private etat etat;
 
     protected void setNom(String nom) {
         this.nom = nom;
@@ -54,10 +54,10 @@ public abstract class Objet {
     public String getEmplacement() {
         return emplacement;
     }
-    protected void setEtat(String etat) {
+    protected void setEtat(etat etat) {
         this.etat = etat;
     }
-    public String getEtat() {
+    public etat getEtat() {
         return etat;
     }
 

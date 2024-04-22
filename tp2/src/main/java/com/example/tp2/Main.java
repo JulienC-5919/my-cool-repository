@@ -15,7 +15,6 @@ import javafx.scene.control.TableColumn;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.time.LocalDate;
 
 public class Main extends Application {
@@ -34,7 +33,8 @@ public class Main extends Application {
     GridPane gpSectionOutil;
     GridPane gpSectionJeu;
 
-    final SectionHautNouvelObjet sectionHautNouvelObjet = new SectionHautNouvelObjet();
+    final NouvelObjetHaut sectionHautNouvelObjet = new NouvelObjetHaut();
+    final NouvelObjetBas sectionBasNouvelObjet = new NouvelObjetBas();
     final SectionGenerale sectionGenerale = new SectionGenerale();
     final SectionLivre sectionLivre = new SectionLivre();
     final SectionOutil sectionOutil = new SectionOutil();
@@ -54,6 +54,7 @@ public class Main extends Application {
 
         preparerTableView();
         vbMenuGauche = new VBox();
+        vbMenuGauche.setMinWidth(300);
     }
 
 
@@ -65,7 +66,8 @@ public class Main extends Application {
         root.setCenter(tvObjets);
         root.setRight(vbMenuGauche);
 
-        vbMenuGauche.getChildren().add(sectionHautNouvelObjet.getContenu());
+        vbMenuGauche.getChildren().add(sectionHautNouvelObjet.recharger());
+        vbMenuGauche.getChildren().add(sectionBasNouvelObjet.recharger());
         //vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
         //vbMenuGauche.getChildren().add(sectionLivre.getContenu());
         //vbMenuGauche.getChildren().add(sectionOutil.getContenu());
@@ -74,11 +76,6 @@ public class Main extends Application {
         stage.setTitle("2268130 TP2");
         stage.setScene(scene);
         stage.show();
-
-        //todo remove
-        Livre tmp = new Livre();
-        tmp.setDateAchat(LocalDate.now());
-        objets.add(tmp);
     }
 
     public static void main(String[] args) {
@@ -97,15 +94,21 @@ public class Main extends Application {
         ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
         ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
 
-        ChoiceBox<String> choixEtat = new ChoiceBox<String>();
-        choixEtat.getItems().addAll("Tous", "En possession", "Prêté", "Perdu");
+        ChoiceBox<String> cbEtat = new ChoiceBox<String>(
+                FXCollections.observableArrayList("Tous", "En possession", "Prêté", "Perdu")
+        );
+        cbEtat.getSelectionModel().select(0);
 
         txfRecherche = new TextField();
+
         txfRecherche.setPromptText("Recherche");
+
+        btnAjouterObjet.setOnAction(e -> nouvelObjet());
+        btnSupprimerObjet.setOnAction(e -> supprimerObjet());
 
         hbBarreOutils.getChildren().addAll(
                 btnAjouterObjet, btnSupprimerObjet, new Separator(Orientation.VERTICAL), tbtnOutil, tbtnLivre, tbtnJeu,
-                new Separator(Orientation.VERTICAL), new Label("Filtre"), choixEtat, txfRecherche
+                new Separator(Orientation.VERTICAL), new Label("Filtre"), cbEtat, txfRecherche
         );
     }
 
@@ -157,16 +160,19 @@ public class Main extends Application {
     }
 
     private static class SectionGenerale {
-        GridPane gpContenu = new GridPane();
+        private final GridPane gpContenu = new GridPane();
 
         private final TextField txfNom = new TextField();
         private final TextField txfPrix = new TextField();
         private final Spinner<Integer> spQuantite = new Spinner<>();
         private final DatePicker dpAchat = new DatePicker();
+        private final ChoiceBox<String> cbEtat = new ChoiceBox<String>(
+                FXCollections.observableArrayList("En possession", "Prêté", "Perdu")
+        );
         private final TextField txfEmplacement = new TextField();
         private File facture;
         private SectionGenerale() {
-            spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, Integer.MAX_VALUE) {
+            spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE) {
             });
 
             Label entete = new Label("Secton générale");
@@ -187,11 +193,19 @@ public class Main extends Application {
             gpContenu.add(spQuantite, 1, 3);
             gpContenu.add(dpAchat, 1, 4);
             //gpSectionGenerale.add(selecteurFacture(),1,5);
-            //gpSectionGenerale.add(ChoiceBoxEtat(), 1, 6);
+            gpContenu.add(cbEtat, 1, 6);
             gpContenu.add(txfEmplacement, 1, 7);
         }
 
-        private GridPane getContenu() {
+        private GridPane recharger() {
+            txfNom.clear();
+            txfPrix.clear();
+            spQuantite.getValueFactory().setValue(1);
+            dpAchat.getEditor().clear();
+            cbEtat.getSelectionModel().select(-1);
+            txfEmplacement.clear();
+            //todo facture
+
             return gpContenu;
         }
 
@@ -213,6 +227,14 @@ public class Main extends Application {
 
         private File getFacture() {
             return facture;
+        }
+
+        private int getNumeroEtat() {
+            return cbEtat.getSelectionModel().getSelectedIndex();
+        }
+
+        private String getEmplacement() {
+            return txfEmplacement.getText();
         }
     }
 
@@ -240,7 +262,12 @@ public class Main extends Application {
             gpContenu.add(txfAnneePublication, 1, 4);
         }
 
-        private GridPane getContenu() {
+        private GridPane recharger() {
+            txfAuteur.clear();
+            txfMaisonEdition.clear();
+            txfAnneeEcrture.clear();
+            txfAnneePublication.clear();
+
             return gpContenu;
         }
         private String getAuteur() {
@@ -275,7 +302,10 @@ public class Main extends Application {
             gpContenu.add(txfNumeroSerie, 1, 2);
         }
 
-        private GridPane getContenu() {
+        private GridPane recharger() {
+            txfmarque.clear();
+            txfNumeroSerie.clear();
+
             return gpContenu;
         }
 
@@ -312,7 +342,12 @@ public class Main extends Application {
             gpContenu.add(txfAnneeSortie, 1, 4);
         }
 
-        private GridPane getContenu() {
+        private GridPane recharger() {
+            txfConsole.clear();
+            txfNbJoueurs.clear();
+            txfDeveloppement.clear();
+            txfAnneeSortie.clear();
+
             return gpContenu;
         }
         private String getConsole() {
@@ -329,13 +364,15 @@ public class Main extends Application {
         }
     }
 
-    private class SectionHautNouvelObjet {
-        private GridPane gpContenu = new GridPane();
-        private SectionHautNouvelObjet() {
+    private class NouvelObjetHaut {
+        private final GridPane gpContenu = new GridPane();
+        private final ChoiceBox<String> cbTypeObjet = new ChoiceBox<String>(
+                FXCollections.observableArrayList("Livre", "Outil", "Jeu")
+        );
+
+        private NouvelObjetHaut() {
             Label entete = new Label("Nouvel objet d'inventaire");
 
-            ChoiceBox<String> cbTypeObjet = new ChoiceBox<String>();
-            cbTypeObjet.setItems(FXCollections.observableArrayList("Livre", "Outil", "Jeu"));
             cbTypeObjet.setOnAction(e -> chargerSection(cbTypeObjet.getSelectionModel().getSelectedIndex()));
 
             entete.setFont(new Font(20));
@@ -346,25 +383,48 @@ public class Main extends Application {
 
             gpContenu.add(cbTypeObjet, 1, 1);
         }
-        private GridPane getContenu() {
+        private GridPane recharger() {
+            cbTypeObjet.getSelectionModel().select(-1);
             return gpContenu;
+        }
+        private int getSelection() {
+            return cbTypeObjet.getSelectionModel().getSelectedIndex();
+        }
+    }
+
+    private class NouvelObjetBas {
+        private final HBox hbContenu = new HBox();
+        private final Button btnAjouter = new Button("Ajouter");
+        private NouvelObjetBas() {
+            Button btnAnnuler = new Button("Annuler");
+
+            btnAjouter.setOnAction(e -> creerObjetSelonType());
+            btnAnnuler.setOnAction(e -> vbMenuGauche.getChildren().clear());
+
+            hbContenu.getChildren().addAll(btnAjouter, btnAnnuler);
+        }
+
+        private HBox recharger() {
+            btnAjouter.setDisable(true);
+            return hbContenu;
         }
     }
 
     private void chargerSection(int numeroSection) {
-        System.out.println(numeroSection);
-        if (vbMenuGauche.getChildren().size() == 1) {
-            vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
+        sectionBasNouvelObjet.btnAjouter.setDisable(false);
+
+        if (vbMenuGauche.getChildren().size() == 2) {
+            vbMenuGauche.getChildren().add(1, sectionGenerale.recharger());
 
             switch (numeroSection) {
                 case 0 -> {
-                    vbMenuGauche.getChildren().add(sectionLivre.getContenu());
+                    vbMenuGauche.getChildren().add(2, sectionLivre.recharger());
                 }
                 case 1 -> {
-                    vbMenuGauche.getChildren().add(sectionOutil.getContenu());
+                    vbMenuGauche.getChildren().add(2, sectionOutil.recharger());
                 }
                 default -> {
-                    vbMenuGauche.getChildren().add(sectionJeu.getContenu());
+                    vbMenuGauche.getChildren().add(2, sectionJeu.recharger());
                 }
             }
         }
@@ -372,15 +432,107 @@ public class Main extends Application {
 
             switch (numeroSection) {
                 case 0 -> {
-                    vbMenuGauche.getChildren().set(2, sectionLivre.getContenu());
+                    vbMenuGauche.getChildren().set(2, sectionLivre.recharger());
                 }
                 case 1 -> {
-                    vbMenuGauche.getChildren().set(2, sectionOutil.getContenu());
+                    vbMenuGauche.getChildren().set(2, sectionOutil.recharger());
                 }
-                default -> {
-                    vbMenuGauche.getChildren().set(2, sectionJeu.getContenu());
+                case 2 -> {
+                    vbMenuGauche.getChildren().set(2, sectionJeu.recharger());
                 }
             }
         }
+    }
+
+    private void creerObjetSelonType() {
+        switch (sectionHautNouvelObjet.getSelection()) {
+            case 0 -> {
+                Livre livre = new Livre();
+
+                livre.setAuteur(sectionLivre.getAuteur());
+                livre.setMaisonEdition(sectionLivre.getMaisonEdition());
+                livre.setAnneeEcriture(sectionLivre.getAnneeEcriture());
+                livre.setAnneePublication(sectionLivre.getAnneePublication());
+
+                terminerCreation(livre);
+            }
+
+            case 1 -> {
+                Outil outil = new Outil();
+
+                outil.setMarque(sectionOutil.getMarque());
+                outil.setNumeroSerie(sectionOutil.getNumeroSerie());
+
+                terminerCreation(outil);
+            }
+
+            default -> {
+                Jeu jeu = new Jeu();
+
+                jeu.setConsole(sectionJeu.getConsole());
+                jeu.setNbJoueurs(sectionJeu.getNbJoueurs());
+                jeu.setDeveloppement(sectionJeu.getDeveloppement());
+                jeu.setAnneeSortie(sectionJeu.getAnneeSortie());
+
+                terminerCreation(jeu);
+            }
+        }
+    }
+
+    private void terminerCreation(Objet objet) {
+        objet.setNom(sectionGenerale.getNom());
+        objet.setPrix(sectionGenerale.getPrix());
+        objet.setQuantite(sectionGenerale.getQuantite());
+        objet.setDateAchat(sectionGenerale.getDateAchat());
+        //todo setfacture
+        switch (sectionGenerale.getNumeroEtat()) {
+            case 0 -> {
+                objet.setEtat(Objet.etat.EN_POSSESSION);
+            }
+            case 1 -> {
+                objet.setEtat(Objet.etat.PRETE);
+            }
+            default -> {
+                objet.setEtat(Objet.etat.PERDU);
+            }
+        }
+        objet.setEmplacement(sectionGenerale.getEmplacement());
+
+        objets.add(objet);
+
+        vbMenuGauche.getChildren().clear();
+    }
+
+    private void supprimerObjet() {
+        int selection = tvObjets.getSelectionModel().getSelectedIndex();
+
+        if (selection < 0) {
+            if (objets.isEmpty()) {
+                afficherErreur(
+                        "Aucun objet à supprimer",
+                        "Impossible de supprimer un objet car la liste est vide."
+                );
+            }
+            else {
+                afficherErreur(
+                        "Aucun objet sélectionné",
+                        "Veuillez sélectionner un objet à supprimer dans la liste."
+                );
+            }
+        }
+        else {
+            objets.remove(tvObjets.getSelectionModel().getSelectedIndex());
+        }
+    }
+
+    private void afficherErreur(String entete, String details) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, details);
+        alert.setHeaderText(entete);
+        alert.showAndWait();
+    }
+
+    private void nouvelObjet() {
+        vbMenuGauche.getChildren().clear();
+        vbMenuGauche.getChildren().addAll(sectionHautNouvelObjet.recharger(), sectionBasNouvelObjet.recharger());
     }
 }
