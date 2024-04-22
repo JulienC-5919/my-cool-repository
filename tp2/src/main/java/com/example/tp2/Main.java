@@ -15,6 +15,7 @@ import javafx.scene.control.TableColumn;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.time.LocalDate;
 
 public class Main extends Application {
@@ -33,9 +34,11 @@ public class Main extends Application {
     GridPane gpSectionOutil;
     GridPane gpSectionJeu;
 
+    final SectionHautNouvelObjet sectionHautNouvelObjet = new SectionHautNouvelObjet();
     final SectionGenerale sectionGenerale = new SectionGenerale();
     final SectionLivre sectionLivre = new SectionLivre();
     final SectionOutil sectionOutil = new SectionOutil();
+    final SectionJeu sectionJeu = new SectionJeu();
 
 
 
@@ -50,7 +53,6 @@ public class Main extends Application {
         preparerBarreHaut();
 
         preparerTableView();
-
         vbMenuGauche = new VBox();
     }
 
@@ -63,9 +65,10 @@ public class Main extends Application {
         root.setCenter(tvObjets);
         root.setRight(vbMenuGauche);
 
-        vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
-        vbMenuGauche.getChildren().add(sectionLivre.getContenu());
-        vbMenuGauche.getChildren().add(sectionOutil.getContenu());
+        vbMenuGauche.getChildren().add(sectionHautNouvelObjet.getContenu());
+        //vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
+        //vbMenuGauche.getChildren().add(sectionLivre.getContenu());
+        //vbMenuGauche.getChildren().add(sectionOutil.getContenu());
 
         Scene scene = new Scene(root, 500, 240);
         stage.setTitle("2268130 TP2");
@@ -160,6 +163,7 @@ public class Main extends Application {
         private final TextField txfPrix = new TextField();
         private final Spinner<Integer> spQuantite = new Spinner<>();
         private final DatePicker dpAchat = new DatePicker();
+        private final TextField txfEmplacement = new TextField();
         private File facture;
         private SectionGenerale() {
             spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, Integer.MAX_VALUE) {
@@ -184,6 +188,7 @@ public class Main extends Application {
             gpContenu.add(dpAchat, 1, 4);
             //gpSectionGenerale.add(selecteurFacture(),1,5);
             //gpSectionGenerale.add(ChoiceBoxEtat(), 1, 6);
+            gpContenu.add(txfEmplacement, 1, 7);
         }
 
         private GridPane getContenu() {
@@ -212,7 +217,7 @@ public class Main extends Application {
     }
 
     private static class SectionLivre {
-        GridPane gpContenu = new GridPane();;
+        private final GridPane gpContenu = new GridPane();;
 
         private final TextField txfAuteur = new TextField();
         private final TextField txfMaisonEdition = new TextField();
@@ -254,9 +259,9 @@ public class Main extends Application {
     }
 
     private static class SectionOutil {
-        GridPane gpContenu = new GridPane();
-        TextField txfmarque = new TextField();
-        TextField txfNumeroSerie = new TextField();
+        private final GridPane gpContenu = new GridPane();
+        private final TextField txfmarque = new TextField();
+        private final TextField txfNumeroSerie = new TextField();
         private SectionOutil() {
             Label entete = new Label("Secton outil");
             entete.setFont(new Font(20));
@@ -284,22 +289,22 @@ public class Main extends Application {
     }
 
     private static class SectionJeu {
-        GridPane gpContenu = new GridPane();;
+        private final GridPane gpContenu = new GridPane();
 
         private final TextField txfConsole = new TextField();
         private final TextField txfNbJoueurs = new TextField();
         private final TextField txfDeveloppement = new TextField();
         private final TextField txfAnneeSortie = new TextField();
         private SectionJeu() {
-            Label entete = new Label("Secton livre");
+            Label entete = new Label("Secton jeu");
             entete.setFont(new Font(20));
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
-            gpContenu.add(new Label("Auteur:"), 0, 1);
-            gpContenu.add(new Label("Maison d'édition:"), 0, 2);
-            gpContenu.add(new Label("Année d'écriture:"), 0, 3);
-            gpContenu.add(new Label("Année de publication:"), 0, 4);
+            gpContenu.add(new Label("Console:"), 0, 1);
+            gpContenu.add(new Label("Nombre de joueurs:"), 0, 2);
+            gpContenu.add(new Label("Développement:"), 0, 3);
+            gpContenu.add(new Label("Année de sortie:"), 0, 4);
 
             gpContenu.add(txfConsole, 1, 1);
             gpContenu.add(txfNbJoueurs, 1, 2);
@@ -313,15 +318,69 @@ public class Main extends Application {
         private String getConsole() {
             return txfConsole.getText();
         }
-        private int getbJoueurs() {
+        private int getNbJoueurs() {
             return Integer.parseInt(txfNbJoueurs.getText());
         }
         private String getDeveloppement() {
             return txfDeveloppement.getText();
         }
-        private short getAnneePublication() {
+        private short getAnneeSortie() {
             return Short.parseShort(txfAnneeSortie.getText());
         }
+    }
 
+    private class SectionHautNouvelObjet {
+        private GridPane gpContenu = new GridPane();
+        private SectionHautNouvelObjet() {
+            Label entete = new Label("Nouvel objet d'inventaire");
+
+            ChoiceBox<String> cbTypeObjet = new ChoiceBox<String>();
+            cbTypeObjet.setItems(FXCollections.observableArrayList("Livre", "Outil", "Jeu"));
+            cbTypeObjet.setOnAction(e -> chargerSection(cbTypeObjet.getSelectionModel().getSelectedIndex()));
+
+            entete.setFont(new Font(20));
+
+            gpContenu.add(entete, 0, 0, 2, 1);
+
+            gpContenu.add(new Label("Type d'objet:"), 0, 1);
+
+            gpContenu.add(cbTypeObjet, 1, 1);
+        }
+        private GridPane getContenu() {
+            return gpContenu;
+        }
+    }
+
+    private void chargerSection(int numeroSection) {
+        System.out.println(numeroSection);
+        if (vbMenuGauche.getChildren().size() == 1) {
+            vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
+
+            switch (numeroSection) {
+                case 0 -> {
+                    vbMenuGauche.getChildren().add(sectionLivre.getContenu());
+                }
+                case 1 -> {
+                    vbMenuGauche.getChildren().add(sectionOutil.getContenu());
+                }
+                default -> {
+                    vbMenuGauche.getChildren().add(sectionJeu.getContenu());
+                }
+            }
+        }
+        else {
+
+            switch (numeroSection) {
+                case 0 -> {
+                    vbMenuGauche.getChildren().set(2, sectionLivre.getContenu());
+                }
+                case 1 -> {
+                    vbMenuGauche.getChildren().set(2, sectionOutil.getContenu());
+                }
+                default -> {
+                    vbMenuGauche.getChildren().set(2, sectionJeu.getContenu());
+                }
+            }
+        }
     }
 }
