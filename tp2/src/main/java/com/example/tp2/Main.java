@@ -42,6 +42,10 @@ public class Main extends Application {
     private final ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
     private final ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
 
+    private final ChoiceBox<String> cbEtat = new ChoiceBox<String>(
+            FXCollections.observableArrayList("Tous", "En possession", "Prêté", "Perdu")
+    );
+
     private final ArrayList<Livre> livres = new ArrayList<Livre>();
     private final ArrayList<Outil> outils = new ArrayList<Outil>();
     private final ArrayList<Jeu> jeux = new ArrayList<Jeu>();
@@ -62,17 +66,14 @@ public class Main extends Application {
 
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
         root.setTop(vbBarreHaut);
         root.setCenter(tvObjets);
         root.setRight(vbMenuGauche);
 
-        vbMenuGauche.getChildren().add(sectionHautNouvelObjet.recharger());
-        vbMenuGauche.getChildren().add(sectionBasNouvelObjet.recharger());
-
-        Scene scene = new Scene(root, 500, 240);
+        Scene scene = new Scene(root, 1000, 500);
         stage.setTitle("2268130 TP2");
         stage.setScene(scene);
         stage.show();
@@ -90,9 +91,6 @@ public class Main extends Application {
         Button btnAjouterObjet = new Button("➕");
         Button btnSupprimerObjet = new Button("➖");
 
-        ChoiceBox<String> cbEtat = new ChoiceBox<String>(
-                FXCollections.observableArrayList("Tous", "En possession", "Prêté", "Perdu")
-        );
         txfRecherche = new TextField();
 
         cbEtat.getSelectionModel().select(0);
@@ -104,6 +102,8 @@ public class Main extends Application {
         tbtnLivre.setOnAction(e -> rechargerObjets());
         tbtnOutil.setOnAction(e -> rechargerObjets());
         tbtnJeu.setOnAction(e -> rechargerObjets());
+
+        cbEtat.setOnAction(e -> rechargerObjets());
         
         txfRecherche.textProperty().addListener(e -> rechargerObjets());
         txfRecherche.setPromptText("Recherche");
@@ -177,6 +177,8 @@ public class Main extends Application {
         private final TextField txfEmplacement = new TextField();
         private File facture;
         private SectionGenerale() {
+            VBox vbSelecteurFacture = new VBox();
+
             spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE) {
             });
 
@@ -593,7 +595,26 @@ public class Main extends Application {
                 objet.getPrix().contains(recherche) ||
                 String.valueOf(objet.getQuantite()).contains(recherche)
         ) {
-            objets.add(objet);
+            switch (cbEtat.getSelectionModel().getSelectedIndex()) {
+                case 0 -> {
+                    objets.add(objet);
+                }
+                case 1 -> {
+                    if (objet.getEtat() == Objet.etat.EN_POSSESSION) {
+                        objets.add(objet);
+                    }
+                }
+                case 2 -> {
+                    if (objet.getEtat() == Objet.etat.PRETE) {
+                        objets.add(objet);
+                    }
+                }
+                default -> {
+                    if (objet.getEtat() == Objet.etat.PERDU) {
+                        objets.add(objet);
+                    }
+                }
+            }
         }
     }
 }
