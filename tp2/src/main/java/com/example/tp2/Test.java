@@ -20,11 +20,13 @@ import javafx.scene.control.TableColumn;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Test {
 
     public static void main(String[] args) {
-        GridPane p = new GridPane();
+        Pattern p = Pattern.compile("\\");
     }
 }

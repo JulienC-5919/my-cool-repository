@@ -13,9 +13,11 @@ import javafx.stage.Stage;
 import javafx.scene.control.TableColumn;
 
 
+import javax.print.attribute.standard.MediaSize;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class Main extends Application {
 
@@ -29,25 +31,26 @@ public class Main extends Application {
 
     MenuBar mbFichier;
 
-    GridPane gpContenu;
-    GridPane gpSectionOutil;
-    GridPane gpSectionJeu;
+    private final NouvelObjetHaut sectionHautNouvelObjet = new NouvelObjetHaut();
+    private final NouvelObjetBas sectionBasNouvelObjet = new NouvelObjetBas();
+    private final SectionGenerale sectionGenerale = new SectionGenerale();
+    private final SectionLivre sectionLivre = new SectionLivre();
+    private final SectionOutil sectionOutil = new SectionOutil();
+    private final SectionJeu sectionJeu = new SectionJeu();
 
-    final NouvelObjetHaut sectionHautNouvelObjet = new NouvelObjetHaut();
-    final NouvelObjetBas sectionBasNouvelObjet = new NouvelObjetBas();
-    final SectionGenerale sectionGenerale = new SectionGenerale();
-    final SectionLivre sectionLivre = new SectionLivre();
-    final SectionOutil sectionOutil = new SectionOutil();
-    final SectionJeu sectionJeu = new SectionJeu();
+    private final ToggleButton tbtnOutil = new ToggleButton("\uD83D\uDD27");
+    private final ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
+    private final ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
 
+    private final ArrayList<Livre> livres = new ArrayList<Livre>();
+    private final ArrayList<Outil> outils = new ArrayList<Outil>();
+    private final ArrayList<Jeu> jeux = new ArrayList<Jeu>();
 
 
     ObservableList<Objet> objets = FXCollections.observableArrayList();
 
     public Main() {
 
-
-        //genererTableView();
         preparerBarreOutils();
         preparerBarreFichier();
         preparerBarreHaut();
@@ -68,9 +71,6 @@ public class Main extends Application {
 
         vbMenuGauche.getChildren().add(sectionHautNouvelObjet.recharger());
         vbMenuGauche.getChildren().add(sectionBasNouvelObjet.recharger());
-        //vbMenuGauche.getChildren().add(sectionGenerale.getContenu());
-        //vbMenuGauche.getChildren().add(sectionLivre.getContenu());
-        //vbMenuGauche.getChildren().add(sectionOutil.getContenu());
 
         Scene scene = new Scene(root, 500, 240);
         stage.setTitle("2268130 TP2");
@@ -90,16 +90,20 @@ public class Main extends Application {
         Button btnAjouterObjet = new Button("➕");
         Button btnSupprimerObjet = new Button("➖");
 
-        ToggleButton tbtnOutil = new ToggleButton("\uD83D\uDD27");
-        ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
-        ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
-
         ChoiceBox<String> cbEtat = new ChoiceBox<String>(
                 FXCollections.observableArrayList("Tous", "En possession", "Prêté", "Perdu")
         );
+        txfRecherche = new TextField();
+
         cbEtat.getSelectionModel().select(0);
 
-        txfRecherche = new TextField();
+        tbtnLivre.setSelected(true);
+        tbtnOutil.setSelected(true);
+        tbtnJeu.setSelected(true);
+
+        tbtnLivre.setOnAction(e -> rechargerObjets());
+        tbtnOutil.setOnAction(e -> rechargerObjets());
+        tbtnJeu.setOnAction(e -> rechargerObjets());
 
         txfRecherche.setPromptText("Recherche");
 
@@ -287,7 +291,8 @@ public class Main extends Application {
 
     private static class SectionOutil {
         private final GridPane gpContenu = new GridPane();
-        private final TextField txfmarque = new TextField();
+        private final TextField txfMarque = new TextField();
+        private final TextField txfModele = new TextField();
         private final TextField txfNumeroSerie = new TextField();
         private SectionOutil() {
             Label entete = new Label("Secton outil");
@@ -296,25 +301,31 @@ public class Main extends Application {
             gpContenu.add(entete, 0, 0, 2, 1);
 
             gpContenu.add(new Label("Marque:"), 0, 1);
-            gpContenu.add(new Label("Numéro de série:"), 0, 2);
+            gpContenu.add(new Label("Modèle:"), 0, 2);
+            gpContenu.add(new Label("Numéro de série:"), 0, 3);
 
-            gpContenu.add(txfmarque, 1, 1);
-            gpContenu.add(txfNumeroSerie, 1, 2);
+            gpContenu.add(txfMarque, 1, 1);
+            gpContenu.add(txfModele, 1, 2);
+            gpContenu.add(txfNumeroSerie, 1, 3);
         }
 
         private GridPane recharger() {
-            txfmarque.clear();
+            txfMarque.clear();
             txfNumeroSerie.clear();
 
             return gpContenu;
         }
 
         private String getMarque() {
-            return txfmarque.getText();
+            return txfMarque.getText();
         }
 
         private int getNumeroSerie() {
             return Short.parseShort(txfNumeroSerie.getText());
+        }
+
+        private String getModele() {
+            return txfModele.getText();
         }
     }
 
@@ -449,37 +460,46 @@ public class Main extends Application {
             case 0 -> {
                 Livre livre = new Livre();
 
+                remplirValeursObjet(livre);
+
                 livre.setAuteur(sectionLivre.getAuteur());
                 livre.setMaisonEdition(sectionLivre.getMaisonEdition());
                 livre.setAnneeEcriture(sectionLivre.getAnneeEcriture());
                 livre.setAnneePublication(sectionLivre.getAnneePublication());
 
-                terminerCreation(livre);
+                livres.add(livre);
             }
 
             case 1 -> {
                 Outil outil = new Outil();
 
+                remplirValeursObjet(outil);
+
                 outil.setMarque(sectionOutil.getMarque());
+                outil.setModele(sectionOutil.getModele());
                 outil.setNumeroSerie(sectionOutil.getNumeroSerie());
 
-                terminerCreation(outil);
+                outils.add(outil);
             }
 
             default -> {
                 Jeu jeu = new Jeu();
+
+                remplirValeursObjet(jeu);
 
                 jeu.setConsole(sectionJeu.getConsole());
                 jeu.setNbJoueurs(sectionJeu.getNbJoueurs());
                 jeu.setDeveloppement(sectionJeu.getDeveloppement());
                 jeu.setAnneeSortie(sectionJeu.getAnneeSortie());
 
-                terminerCreation(jeu);
+                jeux.add(jeu);
             }
         }
+
+        rechargerObjets();
     }
 
-    private void terminerCreation(Objet objet) {
+    private void remplirValeursObjet(Objet objet) {
         objet.setNom(sectionGenerale.getNom());
         objet.setPrix(sectionGenerale.getPrix());
         objet.setQuantite(sectionGenerale.getQuantite());
@@ -498,12 +518,11 @@ public class Main extends Application {
         }
         objet.setEmplacement(sectionGenerale.getEmplacement());
 
-        objets.add(objet);
-
         vbMenuGauche.getChildren().clear();
     }
 
     private void supprimerObjet() {
+        Objet objet; //Objet à supprimer
         int selection = tvObjets.getSelectionModel().getSelectedIndex();
 
         if (selection < 0) {
@@ -521,7 +540,19 @@ public class Main extends Application {
             }
         }
         else {
-            objets.remove(tvObjets.getSelectionModel().getSelectedIndex());
+            objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
+
+            if (objet.getClass() == Livre.class) {
+                livres.remove(objet);
+            }
+            else if (objet.getClass() == Outil.class) {
+                outils.remove(objet);
+            }
+            else {
+                jeux.remove(objet);
+            }
+
+            rechargerObjets();
         }
     }
 
@@ -534,5 +565,19 @@ public class Main extends Application {
     private void nouvelObjet() {
         vbMenuGauche.getChildren().clear();
         vbMenuGauche.getChildren().addAll(sectionHautNouvelObjet.recharger(), sectionBasNouvelObjet.recharger());
+    }
+
+    private void rechargerObjets() {
+        objets.clear();
+
+        if (tbtnLivre.isSelected()) {
+            objets.addAll(livres);
+        }
+        if (tbtnOutil.isSelected()) {
+            objets.addAll(outils);
+        }
+        if (tbtnJeu.isSelected()) {
+            objets.addAll(jeux);
+        }
     }
 }

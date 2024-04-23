@@ -2,6 +2,7 @@ package com.example.tp2;
 
 public class Outil extends Objet {
     private int numeroSerie;
+    private String modele;
     private String marque;
 
 
@@ -22,5 +23,13 @@ public class Outil extends Objet {
 
     public void setMarque(String marque) {
         this.marque = marque;
+    }
+
+    public String getModele() {
+        return modele;
+    }
+
+    public void setModele(String modele) {
+        this.modele = modele;
     }
 }
