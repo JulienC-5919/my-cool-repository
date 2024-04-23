@@ -104,7 +104,8 @@ public class Main extends Application {
         tbtnLivre.setOnAction(e -> rechargerObjets());
         tbtnOutil.setOnAction(e -> rechargerObjets());
         tbtnJeu.setOnAction(e -> rechargerObjets());
-
+        
+        txfRecherche.textProperty().addListener(e -> rechargerObjets());
         txfRecherche.setPromptText("Recherche");
 
         btnAjouterObjet.setOnAction(e -> nouvelObjet());
@@ -571,13 +572,28 @@ public class Main extends Application {
         objets.clear();
 
         if (tbtnLivre.isSelected()) {
-            objets.addAll(livres);
+            livres.forEach(this::chargerSiDansRecherche);
         }
         if (tbtnOutil.isSelected()) {
-            objets.addAll(outils);
+            outils.forEach(this::chargerSiDansRecherche);
         }
         if (tbtnJeu.isSelected()) {
-            objets.addAll(jeux);
+            jeux.forEach(this::chargerSiDansRecherche);
+        }
+    }
+    //static?
+    private void chargerSiDansRecherche(Objet objet) {
+        String recherche = txfRecherche.getText().toLowerCase();
+
+        if (
+                objet.getNom().toLowerCase().contains(recherche) ||
+                objet.getDateAchat().toString().contains(recherche) ||
+                objet.getDescription().toLowerCase().contains(recherche) ||
+                objet.getEmplacement().toLowerCase().contains(recherche) ||
+                objet.getPrix().contains(recherche) ||
+                String.valueOf(objet.getQuantite()).contains(recherche)
+        ) {
+            objets.add(objet);
         }
     }
 }

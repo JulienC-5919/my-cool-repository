@@ -20,6 +20,7 @@ import javafx.scene.control.TableColumn;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,6 @@ import java.util.regex.Pattern;
 public class Test {
 
     public static void main(String[] args) {
-        Pattern p = Pattern.compile("\\");
+        System.out.println("l\\ol".toLowerCase().contains(""));
     }
 }
