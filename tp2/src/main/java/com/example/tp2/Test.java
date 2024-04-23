@@ -32,13 +32,7 @@ public class Test extends Application{
 
     @Override
     public void start(Stage stage) {
-        StackPane root = new StackPane();
-        FileChooser f = new FileChooser();
-        Image image = new Image(f.showOpenDialog(stage).getAbsolutePath());
-
-        Scene scene = new Scene(root, 1000, 1000);
-        stage.setScene(scene);
-        stage.show();
+        TableView<String> tv = new TableView<String>();
     }
     public static void main(String[] args) {
         launch();

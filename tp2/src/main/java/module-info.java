@@ -1,7 +1,6 @@
-module com.example.tp2 {
+module com.example.tp2vraivrai {
     requires javafx.controls;
     requires javafx.fxml;
-    requires java.desktop;
 
 
     opens com.example.tp2 to javafx.fxml;
