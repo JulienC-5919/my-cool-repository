@@ -7,8 +7,11 @@ import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.control.TableColumn;
 
@@ -166,7 +169,6 @@ public class Main extends Application {
 
     private static class SectionGenerale {
         private final GridPane gpContenu = new GridPane();
-
         private final TextField txfNom = new TextField();
         private final TextField txfPrix = new TextField();
         private final Spinner<Integer> spQuantite = new Spinner<>();
@@ -177,13 +179,32 @@ public class Main extends Application {
         private final TextField txfEmplacement = new TextField();
         private File facture;
         private SectionGenerale() {
-            VBox vbSelecteurFacture = new VBox();
+            HBox hbSelecteurFacture = new HBox();
+            StackPane spCadreFacture = new StackPane();
 
+            Button btnChoisirFacture = new Button("\uD83D\uDCC4");
+            ImageView ivFacture = new ImageView();
             spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE) {
             });
 
             Label entete = new Label("Secton générale");
             entete.setFont(new Font(20));
+
+            spCadreFacture.setBorder(new Border(
+                    new BorderStroke(Color.LIGHTGRAY,
+                    BorderStrokeStyle.SOLID,
+                    CornerRadii.EMPTY,
+                    BorderWidths.DEFAULT)
+            ));
+
+            ivFacture.setFitWidth(100);
+            ivFacture.setFitHeight(100);
+
+            //btnChoisirFacture.setOnAction(facture = ouvrirFichier());
+
+            spCadreFacture.getChildren().add(ivFacture);
+
+            hbSelecteurFacture.getChildren().addAll(spCadreFacture, btnChoisirFacture);
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -199,7 +220,7 @@ public class Main extends Application {
             gpContenu.add(txfPrix, 1, 2);
             gpContenu.add(spQuantite, 1, 3);
             gpContenu.add(dpAchat, 1, 4);
-            //gpSectionGenerale.add(selecteurFacture(),1,5);
+            gpContenu.add(hbSelecteurFacture,1,5);
             gpContenu.add(cbEtat, 1, 6);
             gpContenu.add(txfEmplacement, 1, 7);
         }
@@ -616,5 +637,10 @@ public class Main extends Application {
                 }
             }
         }
+    }
+
+    private static File ouvrirFichier() {
+        //todo ouvrir fichier
+        return null;
     }
 }
