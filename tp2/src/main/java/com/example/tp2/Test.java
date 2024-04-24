@@ -36,14 +36,10 @@ public class Test extends Application{
 
     @Override
     public void start(Stage stage) throws FileNotFoundException {
-        BorderPane root = new BorderPane();
+        Button root = new Button("f");
         ImageView v = new ImageView();
 
-        root.setCenter(new TextField());
-        root.setTop(new Separator(Orientation.HORIZONTAL));
-        root.setBottom(new Separator(Orientation.HORIZONTAL));
-        root.setLeft(new Separator(Orientation.VERTICAL));
-        root.setRight(new Separator(Orientation.VERTICAL));
+
 
         Scene s = new Scene(root, 500, 500);
 

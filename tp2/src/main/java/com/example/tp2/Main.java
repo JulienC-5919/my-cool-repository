@@ -7,6 +7,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -18,21 +19,24 @@ import javafx.scene.control.TableColumn;
 
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class Main extends Application {
 
-    TableView<Objet> tvObjets;
+    private Stage stage;
+    private TableView<Objet> tvObjets;
 
-    HBox hbBarreOutils;
-    VBox vbBarreHaut;
-    VBox vbMenuGauche;
+    private HBox hbBarreOutils;
+    private VBox vbBarreHaut;
+    private VBox vbMenuGauche;
 
-    TextField txfRecherche;
+    private TextField txfRecherche;
 
-    MenuBar mbFichier;
+    private MenuBar mbFichier;
 
     private final NouvelObjetHaut sectionHautNouvelObjet = new NouvelObjetHaut();
     private final NouvelObjetBas sectionBasNouvelObjet = new NouvelObjetBas();
@@ -70,6 +74,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
+        this.stage = stage;
+
         BorderPane root = new BorderPane();
 
         root.setTop(vbBarreHaut);
@@ -167,7 +173,7 @@ public class Main extends Application {
         tvObjets.setItems(objets);
     }
 
-    private static class SectionGenerale {
+    private class SectionGenerale {
         private final GridPane gpContenu = new GridPane();
         private final TextField txfNom = new TextField();
         private final TextField txfPrix = new TextField();
@@ -178,12 +184,14 @@ public class Main extends Application {
         );
         private final TextField txfEmplacement = new TextField();
         private File facture;
+
+        private final ImageView ivFacture = new ImageView();
         private SectionGenerale() {
             HBox hbSelecteurFacture = new HBox();
             StackPane spCadreFacture = new StackPane();
 
             Button btnChoisirFacture = new Button("\uD83D\uDCC4");
-            ImageView ivFacture = new ImageView();
+
             spQuantite.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE) {
             });
 
@@ -200,7 +208,8 @@ public class Main extends Application {
             ivFacture.setFitWidth(100);
             ivFacture.setFitHeight(100);
 
-            //btnChoisirFacture.setOnAction(facture = ouvrirFichier());
+            btnChoisirFacture.setOnAction(e -> choisirFacture());
+            ivFacture.setOnMouseClicked(e -> afficherImage());
 
             spCadreFacture.getChildren().add(ivFacture);
 
@@ -235,6 +244,41 @@ public class Main extends Application {
             //todo facture
 
             return gpContenu;
+        }
+
+        private void choisirFacture() {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Tous les fichiers images", "*.bmp", "*.gif", "*.jpeg", "*.png"),
+                    new FileChooser.ExtensionFilter("BMP (*.bmp)", "*.bmp"),
+                    new FileChooser.ExtensionFilter("GIF (*.gif)", "*.gif"),
+                    new FileChooser.ExtensionFilter("JPEG (*.jpeg)", "*.jpeg"),
+                    new FileChooser.ExtensionFilter("PNG (*.png)", "*.png"),
+                    new FileChooser.ExtensionFilter("Tous les fichiers", "*")
+            );
+            facture = fileChooser.showOpenDialog(stage);
+            try {
+                ivFacture.setImage(new Image(new FileInputStream(facture)));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void afficherImage() {
+            try {
+                StackPane root = new StackPane();
+                ImageView imageFacture = new ImageView(new Image(new FileInputStream(facture)));
+                Scene scene = new Scene(root);
+                Stage stage = new Stage();
+
+                root.getChildren().add(imageFacture);
+
+                stage.setScene(scene);
+
+                stage.showAndWait();
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private String getNom() {
@@ -639,8 +683,8 @@ public class Main extends Application {
         }
     }
 
-    private static File ouvrirFichier() {
-        //todo ouvrir fichier
-        return null;
+    private File ouvrirFichier() {
+        FileChooser fileChooser = new FileChooser();
+        return fileChooser.showOpenDialog(stage);
     }
 }
