@@ -1,9 +1,10 @@
 package com.example.tp2;
 
-public class Tmp {
-    public Tmp(String s) {
-        nom = s;
-    }
-    private String nom;
-    public String getNom;
+import java.io.Serializable;
+import java.util.ArrayList;
+
+public class Tmp implements Serializable {
+    public final ArrayList<Livre> livres = new ArrayList<>();
+    public final ArrayList<Outil> outils = new ArrayList<>();
+    public final ArrayList<Jeu> jeux = new ArrayList<>();
 }

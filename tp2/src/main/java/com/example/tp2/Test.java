@@ -6,6 +6,9 @@ import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableArray;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventTarget;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
@@ -39,6 +42,8 @@ public class Test extends Application{
         Button root = new Button("f");
         ImageView v = new ImageView();
 
+        root.setOnAction(e -> System.out.println(e.getEventType()));
+        root.addEventFilter(ActionEvent.ACTION, e -> {System.out.println("qwer");e.consume();});
 
 
         Scene s = new Scene(root, 500, 500);
@@ -46,8 +51,8 @@ public class Test extends Application{
         stage.setScene(s);
         stage.show();
 
-        FileChooser f = new FileChooser();
-        f.showOpenDialog(stage);
+        //FileChooser f = new FileChooser();
+        //f.showOpenDialog(stage);
     }
     public static void main(String[] args) {
         launch();

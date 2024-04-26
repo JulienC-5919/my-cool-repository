@@ -3,15 +3,12 @@ package com.example.tp2;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class TableViewRepair extends Application {
     @Override
@@ -37,7 +34,7 @@ public class TableViewRepair extends Application {
 
         Livre l= new Livre();
         l.setNom("f");
-        o.add(new Tmp("p"));
+        //o.add(new Tmp("p"));
 
     }
 

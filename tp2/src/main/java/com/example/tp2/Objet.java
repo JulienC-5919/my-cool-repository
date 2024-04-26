@@ -1,12 +1,12 @@
 package com.example.tp2;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
-public abstract class Objet {
+public abstract class Objet implements Serializable {
     public static enum etat {EN_POSSESSION, PRETE, PERDU}
-
 
     private String nom;
     private String prix;

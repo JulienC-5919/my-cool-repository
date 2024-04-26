@@ -17,22 +17,20 @@ import javafx.stage.Stage;
 import javafx.scene.control.TableColumn;
 
 
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class Main extends Application {
 
+    // true si des modifications non sauvegardées risquent d'être perdues accidentellement.
+    boolean sauvegarde = true;
     private Stage stage;
     private TableView<Objet> tvObjets;
 
     private HBox hbBarreOutils;
     private VBox vbBarreHaut;
-    private VBox vbMenuGauche;
+    private final VBox vbMenuGauche;
 
     private TextField txfRecherche;
 
@@ -45,18 +43,21 @@ public class Main extends Application {
     private final SectionOutil sectionOutil = new SectionOutil();
     private final SectionJeu sectionJeu = new SectionJeu();
 
+    private ListesObjets listesObjets = new ListesObjets();
+
     private final ToggleButton tbtnOutil = new ToggleButton("\uD83D\uDD27");
     private final ToggleButton tbtnLivre = new ToggleButton("\uD83D\uDCD5");
     private final ToggleButton tbtnJeu = new ToggleButton("\uD83C\uDFAE");
+
+    private final MenuItem miRecharger = new MenuItem("Recharger");
 
     private final ChoiceBox<String> cbEtat = new ChoiceBox<String>(
             FXCollections.observableArrayList("Tous", "En possession", "Prêté", "Perdu")
     );
 
-    private final ArrayList<Livre> livres = new ArrayList<Livre>();
-    private final ArrayList<Outil> outils = new ArrayList<Outil>();
-    private final ArrayList<Jeu> jeux = new ArrayList<Jeu>();
 
+    private File fichier = null;
+    private final FileChooser fileChooser = new FileChooser();
 
     ObservableList<Objet> objets = FXCollections.observableArrayList();
 
@@ -69,6 +70,8 @@ public class Main extends Application {
         preparerTableView();
         vbMenuGauche = new VBox();
         vbMenuGauche.setMinWidth(300);
+
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier DAT (*.dat)","*.dat"));
     }
 
 
@@ -77,6 +80,13 @@ public class Main extends Application {
         this.stage = stage;
 
         BorderPane root = new BorderPane();
+
+        stage.setOnCloseRequest(event -> {
+            verifierSauvegarder();
+            if (!sauvegarde) {
+                event.consume();
+            }
+        });
 
         root.setTop(vbBarreHaut);
         root.setCenter(tvObjets);
@@ -145,10 +155,27 @@ public class Main extends Application {
         MenuItem miExporter = new MenuItem("Exporter");
 
         //todo ajouter actions
+        miOuvrir.setOnAction(e -> {
+            verifierSauvegarder();
+            if (sauvegarde) {
+                ouvrirFichier();
+            }
+        });
 
+        miSauvegarder.setOnAction(e -> miSauvegarderAction());
+        miSauvegarderSous.setOnAction(e -> sauvegarderSous());
+        miExporter.setOnAction(e -> exporter());
 
+        miRecharger.setOnAction(e -> {
+            verifierSauvegarder();
+            if (sauvegarde) {
+                chargerFichier();
+            }
+        });
 
-        menuFichier.getItems().addAll(miOuvrir, miSauvegarder, miSauvegarderSous, miExporter);
+        miRecharger.setDisable(true);
+
+        menuFichier.getItems().addAll(miOuvrir, miSauvegarder, miSauvegarderSous, miExporter, miRecharger);
         mbFichier.getMenus().add(menuFichier);
     }
 
@@ -535,7 +562,7 @@ public class Main extends Application {
                 livre.setAnneeEcriture(sectionLivre.getAnneeEcriture());
                 livre.setAnneePublication(sectionLivre.getAnneePublication());
 
-                livres.add(livre);
+                listesObjets.livres.add(livre);
             }
 
             case 1 -> {
@@ -547,7 +574,7 @@ public class Main extends Application {
                 outil.setModele(sectionOutil.getModele());
                 outil.setNumeroSerie(sectionOutil.getNumeroSerie());
 
-                outils.add(outil);
+                listesObjets.outils.add(outil);
             }
 
             default -> {
@@ -560,11 +587,18 @@ public class Main extends Application {
                 jeu.setDeveloppement(sectionJeu.getDeveloppement());
                 jeu.setAnneeSortie(sectionJeu.getAnneeSortie());
 
-                jeux.add(jeu);
+                listesObjets.jeux.add(jeu);
             }
         }
 
         rechargerObjets();
+        sauvegarde = false;
+    }
+
+    private static class ListesObjets implements Serializable {
+        public final ArrayList<Livre> livres = new ArrayList<>();
+        public final ArrayList<Outil> outils = new ArrayList<>();
+        public final ArrayList<Jeu> jeux = new ArrayList<>();
     }
 
     private void remplirValeursObjet(Objet objet) {
@@ -611,17 +645,19 @@ public class Main extends Application {
             objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
 
             if (objet.getClass() == Livre.class) {
-                livres.remove(objet);
+                listesObjets.livres.remove(objet);
             }
             else if (objet.getClass() == Outil.class) {
-                outils.remove(objet);
+                listesObjets.outils.remove(objet);
             }
             else {
-                jeux.remove(objet);
+                listesObjets.jeux.remove(objet);
             }
 
             rechargerObjets();
         }
+
+        sauvegarde = false;
     }
 
     private void afficherErreur(String entete, String details) {
@@ -639,13 +675,13 @@ public class Main extends Application {
         objets.clear();
 
         if (tbtnLivre.isSelected()) {
-            livres.forEach(this::chargerSiDansRecherche);
+            listesObjets.livres.forEach(this::chargerSiDansRecherche);
         }
         if (tbtnOutil.isSelected()) {
-            outils.forEach(this::chargerSiDansRecherche);
+            listesObjets.outils.forEach(this::chargerSiDansRecherche);
         }
         if (tbtnJeu.isSelected()) {
-            jeux.forEach(this::chargerSiDansRecherche);
+            listesObjets.jeux.forEach(this::chargerSiDansRecherche);
         }
     }
     //static?
@@ -683,8 +719,83 @@ public class Main extends Application {
         }
     }
 
-    private File ouvrirFichier() {
-        FileChooser fileChooser = new FileChooser();
-        return fileChooser.showOpenDialog(stage);
+    private void sauvegarder() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(fichier);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+
+            objectOut.writeObject(listesObjets);
+
+            objectOut.close();
+            fileOut.close();
+            sauvegarde = true;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sauvegarderSous() {
+        File fichierChoisi;
+
+        fichierChoisi = fileChooser.showSaveDialog(stage);
+        if (fichierChoisi != null) {
+            fichier = fichierChoisi;
+            sauvegarder();
+            miRecharger.setDisable(false);
+        }
+    }
+
+    private void miSauvegarderAction() {
+        if (fichier == null) {
+            sauvegarderSous();
+        }
+        else {
+            sauvegarder();
+        }
+    }
+
+    private void verifierSauvegarder() {
+        if (!sauvegarde) {
+            ButtonType btnSauvegarder = new ButtonType("Sauvegarder", ButtonBar.ButtonData.YES);
+            ButtonType btnPasSauvegarder = new ButtonType("Quitter sans sauvegarder", ButtonBar.ButtonData.NO);
+            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert fenetreSauvegarder = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Voulez-vous sauvegarder les modifications?",
+                    btnSauvegarder,
+                    btnPasSauvegarder,
+                    btnAnnuler
+            );
+            fenetreSauvegarder.setHeaderText("Modifications non sauvegardées");
+
+            fenetreSauvegarder.showAndWait().ifPresent(type -> {
+                if (type == btnPasSauvegarder) {
+                    sauvegarde = true;
+                }
+                else if (type == btnSauvegarder) {
+                    miSauvegarderAction();
+                }
+            });
+
+        }
+    }
+
+    private void ouvrirFichier() {
+        miRecharger.setDisable(false);
+    }
+    private void chargerFichier() {
+        try {
+            FileInputStream fileIn = new FileInputStream(fichier);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+
+            listesObjets = (ListesObjets) objectIn.readObject();
+
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void exporter() {
+        //todo exporter
     }
 }

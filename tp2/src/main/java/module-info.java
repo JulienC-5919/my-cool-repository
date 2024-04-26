@@ -1,4 +1,4 @@
-module com.example.tp2vraivrai {
+module com.example.tp {
     requires javafx.controls;
     requires javafx.fxml;
 
