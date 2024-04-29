@@ -1,12 +1,33 @@
 package com.example.tp2;
 
+import javafx.scene.image.Image;
+
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
 public abstract class Objet implements Serializable {
-    public static enum etat {EN_POSSESSION, PRETE, PERDU}
+    public Image getFacture() {
+        return facture;
+    }
+
+    public void setFacture(Image facture) {
+        this.facture = facture;
+    }
+
+    public static enum etat {
+        EN_POSSESSION("En possession"), PRETE("Prêté"), PERDU("Perdu");
+
+        private final String displaName;
+
+        public String getDisplaName(){
+            return displaName;
+        }
+
+        private etat(String displaName) {
+            this.displaName = displaName;
+        }
+    }
 
     private String nom;
     private String prix;
@@ -15,6 +36,7 @@ public abstract class Objet implements Serializable {
     //private image facture
     private String emplacement;
     private etat etat;
+    private Image facture;
 
     protected void setNom(String nom) {
         this.nom = nom;

@@ -20,11 +20,13 @@ import javafx.scene.control.TableColumn;
 import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main extends Application {
+    private BorderPane root;
 
     // true si des modifications non sauvegardées risquent d'être perdues accidentellement.
-    boolean sauvegarde = true;
+    private boolean sauvegarde = true;
     private Stage stage;
     private TableView<Objet> tvObjets;
 
@@ -61,6 +63,8 @@ public class Main extends Application {
 
     ObservableList<Objet> objets = FXCollections.observableArrayList();
 
+    private final HashMap<Objet.etat, String> hmEtat;
+
     public Main() {
 
         preparerBarreOutils();
@@ -72,6 +76,11 @@ public class Main extends Application {
         vbMenuGauche.setMinWidth(300);
 
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier DAT (*.dat)","*.dat"));
+
+        hmEtat = new HashMap<>();
+        hmEtat.put(Objet.etat.EN_POSSESSION, "En possession");
+        hmEtat.put(Objet.etat.PRETE, "Prêté");
+        hmEtat.put(Objet.etat.PERDU, "Perdu");
     }
 
 
@@ -79,7 +88,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         this.stage = stage;
 
-        BorderPane root = new BorderPane();
+        root = new BorderPane();
 
         stage.setOnCloseRequest(event -> {
             verifierSauvegarder();
@@ -91,8 +100,10 @@ public class Main extends Application {
         root.setTop(vbBarreHaut);
         root.setCenter(tvObjets);
         root.setRight(vbMenuGauche);
+        stage.setMinWidth(1000);
+        stage.setMinHeight(650);
 
-        Scene scene = new Scene(root, 1000, 500);
+        Scene scene = new Scene(root);
         stage.setTitle("2268130 TP2");
         stage.setScene(scene);
         stage.show();
@@ -186,7 +197,7 @@ public class Main extends Application {
 
         TableColumn<Objet, String> tcNom = new TableColumn<Objet, String>("Nom");
         TableColumn<Objet, String> tcDescription = new TableColumn<Objet, String>("Description");
-        //TableColumn<Objet,> tcEtat = new TableColumn();
+        TableColumn<Objet, String> tcEtat = new TableColumn(); //todo état
         TableColumn<Objet, LocalDate> tcDateAchat = new TableColumn<Objet, LocalDate>("Date d'achat");
         TableColumn<Objet, String> tcPrix = new TableColumn<Objet, String>("Prix");
 
@@ -210,9 +221,10 @@ public class Main extends Application {
                 FXCollections.observableArrayList("En possession", "Prêté", "Perdu")
         );
         private final TextField txfEmplacement = new TextField();
-        private File facture;
 
         private final ImageView ivFacture = new ImageView();
+
+        private Image facture;
         private SectionGenerale() {
             HBox hbSelecteurFacture = new HBox();
             StackPane spCadreFacture = new StackPane();
@@ -234,11 +246,14 @@ public class Main extends Application {
 
             ivFacture.setFitWidth(100);
             ivFacture.setFitHeight(100);
+            ivFacture.setPreserveRatio(true);
 
             btnChoisirFacture.setOnAction(e -> choisirFacture());
-            ivFacture.setOnMouseClicked(e -> afficherImage());
+            ivFacture.setOnMouseClicked(e -> afficherFacture());
 
             spCadreFacture.getChildren().add(ivFacture);
+            spQuantite.setEditable(true);
+            //todo spQuantite.getEditor().textProperty().addListener(e -> System.out.println(true));
 
             hbSelecteurFacture.getChildren().addAll(spCadreFacture, btnChoisirFacture);
 
@@ -268,7 +283,19 @@ public class Main extends Application {
             dpAchat.getEditor().clear();
             cbEtat.getSelectionModel().select(-1);
             txfEmplacement.clear();
-            //todo facture
+            ivFacture.setImage(null);
+
+            return gpContenu;
+        }
+
+        private GridPane afficherObjet(Objet objet) {
+            txfNom.setText(objet.getNom());
+            txfPrix.setText(objet.getPrix());
+            spQuantite.getValueFactory().setValue(objet.getQuantite());
+            dpAchat.setValue(objet.getDateAchat());
+            //todo cbEtat.getSelectionModel().select(objet.getEtat().);
+            txfEmplacement.setText(objet.getEmplacement());
+            ivFacture.setImage(objet.getFacture());
 
             return gpContenu;
         }
@@ -283,29 +310,30 @@ public class Main extends Application {
                     new FileChooser.ExtensionFilter("PNG (*.png)", "*.png"),
                     new FileChooser.ExtensionFilter("Tous les fichiers", "*")
             );
-            facture = fileChooser.showOpenDialog(stage);
             try {
-                ivFacture.setImage(new Image(new FileInputStream(facture)));
+                facture = new Image(new FileInputStream(fileChooser.showOpenDialog(stage)));
+                ivFacture.setImage(facture);
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private void afficherImage() {
-            try {
-                StackPane root = new StackPane();
-                ImageView imageFacture = new ImageView(new Image(new FileInputStream(facture)));
-                Scene scene = new Scene(root);
-                Stage stage = new Stage();
+        private void afficherFacture() {
 
-                root.getChildren().add(imageFacture);
+            StackPane factureRoot = new StackPane();
+            ImageView imageFacture = new ImageView(facture);
+            Scene scene = new Scene(factureRoot);
+            Stage stage = new Stage();
 
-                stage.setScene(scene);
+            stage.setResizable(false);
 
-                stage.showAndWait();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            factureRoot.getChildren().add(imageFacture);
+
+            stage.setScene(scene);
+
+            root.setDisable(true);
+            stage.showAndWait();
+            root.setDisable(false);
         }
 
         private String getNom() {
@@ -324,7 +352,7 @@ public class Main extends Application {
             return dpAchat.getValue();
         }
 
-        private File getFacture() {
+        private Image getFacture() {
             return facture;
         }
 
@@ -361,7 +389,7 @@ public class Main extends Application {
             gpContenu.add(txfAnneePublication, 1, 4);
         }
 
-        private GridPane recharger() {
+        private GridPane charger() {
             txfAuteur.clear();
             txfMaisonEdition.clear();
             txfAnneeEcrture.clear();
@@ -369,6 +397,15 @@ public class Main extends Application {
 
             return gpContenu;
         }
+        private GridPane afficherLivre(Livre livre) {
+            txfAuteur.setText(livre.getAuteur());
+            txfMaisonEdition.setText(livre.getAuteur());
+            txfAnneeEcrture.setText(String.valueOf(livre.getAnneeEcriture()));
+            txfAnneePublication.setText(String.valueOf(livre.getAnneePublication()));
+
+            return gpContenu;
+        }
+
         private String getAuteur() {
             return txfAuteur.getText();
         }
@@ -411,6 +448,14 @@ public class Main extends Application {
             return gpContenu;
         }
 
+        private GridPane afficherOutil(Outil outil) {
+            txfMarque.setText(outil.getMarque());
+            txfNumeroSerie.setText(String.valueOf(outil.getNumeroSerie()));
+            txfMarque.setText(outil.getMarque());
+
+            return gpContenu;
+        }
+
         private String getMarque() {
             return txfMarque.getText();
         }
@@ -435,6 +480,8 @@ public class Main extends Application {
             Label entete = new Label("Secton jeu");
             entete.setFont(new Font(20));
 
+            //todo spinner joueurs
+
             gpContenu.add(entete, 0, 0, 2, 1);
 
             gpContenu.add(new Label("Console:"), 0, 1);
@@ -456,6 +503,16 @@ public class Main extends Application {
 
             return gpContenu;
         }
+
+        private GridPane afficherJeu(Jeu jeu) {
+            txfConsole.setText(jeu.getConsole());
+            txfNbJoueurs.setText(String.valueOf(jeu.getNbJoueurs()));
+            txfDeveloppement.setText(String.valueOf(jeu.getDeveloppement()));
+            txfAnneeSortie.setText(String.valueOf(jeu.getanneeSortie()));
+
+            return gpContenu;
+        }
+
         private String getConsole() {
             return txfConsole.getText();
         }
@@ -489,7 +546,7 @@ public class Main extends Application {
 
             gpContenu.add(cbTypeObjet, 1, 1);
         }
-        private GridPane recharger() {
+        private GridPane charger() {
             cbTypeObjet.getSelectionModel().select(-1);
             return gpContenu;
         }
@@ -510,7 +567,7 @@ public class Main extends Application {
             hbContenu.getChildren().addAll(btnAjouter, btnAnnuler);
         }
 
-        private HBox recharger() {
+        private HBox charger() {
             btnAjouter.setDisable(true);
             return hbContenu;
         }
@@ -524,7 +581,7 @@ public class Main extends Application {
 
             switch (numeroSection) {
                 case 0 -> {
-                    vbMenuGauche.getChildren().add(2, sectionLivre.recharger());
+                    vbMenuGauche.getChildren().add(2, sectionLivre.charger());
                 }
                 case 1 -> {
                     vbMenuGauche.getChildren().add(2, sectionOutil.recharger());
@@ -538,7 +595,7 @@ public class Main extends Application {
 
             switch (numeroSection) {
                 case 0 -> {
-                    vbMenuGauche.getChildren().set(2, sectionLivre.recharger());
+                    vbMenuGauche.getChildren().set(2, sectionLivre.charger());
                 }
                 case 1 -> {
                     vbMenuGauche.getChildren().set(2, sectionOutil.recharger());
@@ -668,7 +725,7 @@ public class Main extends Application {
 
     private void nouvelObjet() {
         vbMenuGauche.getChildren().clear();
-        vbMenuGauche.getChildren().addAll(sectionHautNouvelObjet.recharger(), sectionBasNouvelObjet.recharger());
+        vbMenuGauche.getChildren().addAll(sectionHautNouvelObjet.charger(), sectionBasNouvelObjet.charger());
     }
 
     private void rechargerObjets() {
@@ -684,7 +741,6 @@ public class Main extends Application {
             listesObjets.jeux.forEach(this::chargerSiDansRecherche);
         }
     }
-    //static?
     private void chargerSiDansRecherche(Objet objet) {
         String recherche = txfRecherche.getText().toLowerCase();
 
@@ -729,6 +785,7 @@ public class Main extends Application {
             objectOut.close();
             fileOut.close();
             sauvegarde = true;
+            miRecharger.setDisable(false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -782,7 +839,14 @@ public class Main extends Application {
     }
 
     private void ouvrirFichier() {
-        miRecharger.setDisable(false);
+        File fichierChoisi;
+
+        fichierChoisi = fileChooser.showOpenDialog(stage);
+
+        if (fichierChoisi != null) {
+            fichier = fichierChoisi;
+            chargerFichier();
+        }
     }
     private void chargerFichier() {
         try {
@@ -790,6 +854,7 @@ public class Main extends Application {
             ObjectInputStream objectIn = new ObjectInputStream(fileIn);
 
             listesObjets = (ListesObjets) objectIn.readObject();
+            miRecharger.setDisable(false);
 
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
