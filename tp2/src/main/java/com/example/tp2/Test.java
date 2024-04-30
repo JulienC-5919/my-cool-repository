@@ -31,6 +31,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class Test{
+public class Test extends Application{
+    public static void main(String[] args) {
+        launch();
+    }
 
+    @Override
+    public void start(Stage stage){
+        File f = new File("/home/pixldragon64/Images/path17-5.png");
+        byte[] g;
+
+        try {
+            g = new FileInputStream(f).readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        ByteArrayInputStream l = new ByteArrayInputStream(g);
+
+        StackPane rootFacture = new StackPane();
+        ImageView imageFacture;
+            imageFacture = new ImageView(new Image(l));
+        Scene scene = new Scene(rootFacture);
+
+        imageFacture.setFitWidth(600);
+        imageFacture.setFitHeight(600);
+        imageFacture.setPreserveRatio(true);
+
+        rootFacture.getChildren().add(imageFacture);
+
+        stage.setScene(scene);
+        stage.setResizable(false);
+
+
+        stage.show();
+    }
 }

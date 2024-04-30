@@ -1,19 +1,17 @@
 package com.example.tp2;
 
-import javafx.scene.image.Image;
-
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDate;
 
 
 public abstract class Objet implements Serializable {
-    public FileInputStream getFacture() {
-        return facture;
+    public byte[] getOctetsImageFacture() {
+        return octetsImageFacture;
     }
 
-    public void setFacture(FileInputStream facture) {
-        this.facture = facture;
+    public void setOctetsImageFacture(byte[] octets) {
+        this.octetsImageFacture = octets;
     }
 
     public static enum etat {
@@ -37,7 +35,7 @@ public abstract class Objet implements Serializable {
     //private image facture
     private String emplacement;
     private etat etat;
-    private FileInputStream facture;
+    private byte[] octetsImageFacture;
 
     protected void setNom(String nom) {
         this.nom = nom;
