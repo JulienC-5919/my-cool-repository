@@ -2,16 +2,17 @@ package com.example.tp2;
 
 import javafx.scene.image.Image;
 
+import java.io.FileInputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
 
 
 public abstract class Objet implements Serializable {
-    public Image getFacture() {
+    public FileInputStream getFacture() {
         return facture;
     }
 
-    public void setFacture(Image facture) {
+    public void setFacture(FileInputStream facture) {
         this.facture = facture;
     }
 
@@ -36,7 +37,7 @@ public abstract class Objet implements Serializable {
     //private image facture
     private String emplacement;
     private etat etat;
-    private Image facture;
+    private FileInputStream facture;
 
     protected void setNom(String nom) {
         this.nom = nom;

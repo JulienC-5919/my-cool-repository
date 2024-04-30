@@ -31,18 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class Test extends Application{
-    Enum e =
-    public static void main(String[] args) {
-        launch();
-    }
+public class Test{
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        ImageView root = new ImageView();
-        StackPane s = new StackPane();
-        s.getChildren().add(root);
-        Scene scene = new Scene(s);stage.setScene(scene);root.setImage(new Image(new FileInputStream("C:\\Users\\2268130\\Pictures\\titre.png")));stage.show();
-        System.out.println(root.getImage());
-    }
 }
