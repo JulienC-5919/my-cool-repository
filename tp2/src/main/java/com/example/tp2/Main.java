@@ -167,12 +167,7 @@ public class Main extends Application {
         MenuItem miNouveau = new MenuItem("Nouveau");
 
         //todo ajouter actions
-        miOuvrir.setOnAction(e -> {
-            confirmerSauvegarder();
-            if (sauvegarde) {
-                ouvrirFichier();
-            }
-        });
+        miOuvrir.setOnAction(e -> ouvrirFichier());
 
         miSauvegarder.setOnAction(e -> miSauvegarderAction());
         miSauvegarderSous.setOnAction(e -> sauvegarderSous());
@@ -257,6 +252,8 @@ public class Main extends Application {
             ivFacture.setFitWidth(100);
             ivFacture.setFitHeight(100);
             ivFacture.setPreserveRatio(true);
+
+            CorrecteursTextFields.ajouterCorrecteurPrix(txfPrix);
 
             btnChoisirFacture.setOnAction(e -> choisirFacture());
             ivFacture.setOnMouseClicked(e -> afficherFacture());
@@ -542,6 +539,12 @@ public class Main extends Application {
             gpContenu.add(txfNbJoueurs, 1, 2);
             gpContenu.add(txfDeveloppement, 1, 3);
             gpContenu.add(txfAnneeSortie, 1, 4);
+            txfConsole.focusedProperty().addListener(new ChangeListener<Boolean>() {//todo remove
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    System.out.println("rrrrrrrrr");
+                }
+            });
         }
 
         private GridPane recharger() {
@@ -875,7 +878,7 @@ public class Main extends Application {
     private void confirmerSauvegarder() {
         if (!sauvegarde) {
             ButtonType btnSauvegarder = new ButtonType("Sauvegarder", ButtonBar.ButtonData.YES);
-            ButtonType btnPasSauvegarder = new ButtonType("Fermer sans sauvegarder", ButtonBar.ButtonData.NO);
+            ButtonType btnPasSauvegarder = new ButtonType("Ne pas sauvegarder", ButtonBar.ButtonData.NO);
             ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
 
             Alert fenetreSauvegarder = new Alert(
@@ -906,8 +909,11 @@ public class Main extends Application {
         fichierChoisi = fileChooser.showOpenDialog(stage);
 
         if (fichierChoisi != null) {
-            fichier = fichierChoisi;
-            chargerFichier();
+            confirmerSauvegarder();
+            if (sauvegarde) {
+                fichier = fichierChoisi;
+                chargerFichier();
+            }
         }
     }
     private void chargerFichier() {
@@ -1009,6 +1015,7 @@ public class Main extends Application {
 
             fenetreSauvegarder.showAndWait().ifPresent(type -> {
                 if (type == btnRecharger) {
+                    sauvegarde = true;
                     chargerFichier();
                 }
             });
