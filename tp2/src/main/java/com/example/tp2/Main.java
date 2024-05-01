@@ -1,6 +1,8 @@
 package com.example.tp2;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -84,7 +86,7 @@ public class Main extends Application {
         this.stage = stage;
 
         stage.setOnCloseRequest(event -> {
-            verifierSauvegarder();
+            confirmerSauvegarder();
             if (!sauvegarde) {
                 event.consume();
             }
@@ -166,7 +168,7 @@ public class Main extends Application {
 
         //todo ajouter actions
         miOuvrir.setOnAction(e -> {
-            verifierSauvegarder();
+            confirmerSauvegarder();
             if (sauvegarde) {
                 ouvrirFichier();
             }
@@ -177,18 +179,13 @@ public class Main extends Application {
         miExporter.setOnAction(e -> exporter());
 
         miNouveau.setOnAction(e -> {
-            verifierSauvegarder();
+            confirmerSauvegarder();
             if (sauvegarde) {
                 reinitialiser();
             }
         });
 
-        miRecharger.setOnAction(e -> {
-            verifierSauvegarder();
-            if (sauvegarde) {
-                chargerFichier();
-            }
-        });
+        miRecharger.setOnAction(e -> confirmerRecharger());
 
         miRecharger.setDisable(true);
 
@@ -212,23 +209,16 @@ public class Main extends Application {
         tcDateAchat.setCellValueFactory(new PropertyValueFactory<Objet, LocalDate>("dateAchat"));
         tcPrix.setCellValueFactory(new PropertyValueFactory<Objet, String>("prix"));
 
-        tvObjets.setOnMouseClicked(event -> {
-            int selection = tvObjets.getSelectionModel().getSelectedIndex();
-
-            if (selection >= 0) {
-                afficherObjet(objets.get(selection));
-            }
-        });
-        /*tvObjets.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+        tvObjets.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
                 int index = t1.intValue();
 
                 if (index >= 0) {
-                afficherObjet(objets.get(index));
+                    afficherObjet(objets.get(index));
                 }
             }
-        });*/
+        });
 
         tvObjets.getColumns().addAll(tcNom, tcDescription, tcDateAchat, tcPrix);
 
@@ -784,9 +774,8 @@ public class Main extends Application {
             }
 
             rechargerObjets();
+            sauvegarde = false;
         }
-
-        sauvegarde = false;
     }
 
     private void afficherErreur(String entete, String details) {
@@ -883,10 +872,10 @@ public class Main extends Application {
         }
     }
 
-    private void verifierSauvegarder() {
+    private void confirmerSauvegarder() {
         if (!sauvegarde) {
             ButtonType btnSauvegarder = new ButtonType("Sauvegarder", ButtonBar.ButtonData.YES);
-            ButtonType btnPasSauvegarder = new ButtonType("Ne pas sauvegarder", ButtonBar.ButtonData.NO);
+            ButtonType btnPasSauvegarder = new ButtonType("Fermer sans sauvegarder", ButtonBar.ButtonData.NO);
             ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
 
             Alert fenetreSauvegarder = new Alert(
@@ -896,6 +885,7 @@ public class Main extends Application {
                     btnPasSauvegarder,
                     btnAnnuler
             );
+            fenetreSauvegarder.setTitle("Modifications non sauvegardées");
             fenetreSauvegarder.setHeaderText("Modifications non sauvegardées");
 
             fenetreSauvegarder.showAndWait().ifPresent(type -> {
@@ -927,9 +917,10 @@ public class Main extends Application {
 
             listesObjets = (ListesObjets) objectIn.readObject();
             miRecharger.setDisable(false);
-            rechargerObjets();
+
+            reinitialiserFiltres();
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            afficherErreur("Erreur d'ouverture","Le ficher est non supporté ou corrompu.");
         }
     }
     private void exporter() {
@@ -957,7 +948,10 @@ public class Main extends Application {
         Button btnFermer = new Button("Fermer");
 
         btnModifier.setOnAction(event -> modifierObjet());
-        btnFermer.setOnAction(event -> vbMenuGauche.getChildren().clear());
+        btnFermer.setOnAction(event -> {
+            vbMenuGauche.getChildren().clear();
+            tvObjets.getSelectionModel().clearSelection();
+        });
 
         hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
 
@@ -981,10 +975,44 @@ public class Main extends Application {
     }
 
     private void reinitialiser() {
+        miRecharger.setDisable(true);
+
         fichier = null;
         listesObjets.livres.clear();
         listesObjets.outils.clear();
         listesObjets.jeux.clear();
-        rechargerObjets();
+
+        reinitialiserFiltres();
+    }
+
+    private void reinitialiserFiltres() {
+        tbtnLivre.setSelected(true);
+        tbtnOutil.setSelected(true);
+        tbtnJeu.setSelected(true);
+
+        txfRecherche.clear();
+    }
+
+    private void confirmerRecharger() {
+        if (!sauvegarde) {
+            ButtonType btnRecharger = new ButtonType("Recharger", ButtonBar.ButtonData.YES);
+            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert fenetreSauvegarder = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Toutes les modifications seront perdues.",
+                    btnRecharger,
+                    btnAnnuler
+            );
+            fenetreSauvegarder.setTitle("Recharger?");
+            fenetreSauvegarder.setHeaderText("Recharger?");
+
+            fenetreSauvegarder.showAndWait().ifPresent(type -> {
+                if (type == btnRecharger) {
+                    chargerFichier();
+                }
+            });
+
+        }
     }
 }
