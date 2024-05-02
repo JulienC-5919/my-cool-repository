@@ -1022,4 +1022,6 @@ public class Main extends Application {
 
         }
     }
+
+    private static void selectionnerTexteQuandClique()
 }
