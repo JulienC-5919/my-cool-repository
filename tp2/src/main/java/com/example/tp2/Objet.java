@@ -1,38 +1,31 @@
 package com.example.tp2;
 
-import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-
+/**
+ * Stocke les valeurs d'un objet d'inventaire
+ */
 public abstract class Objet implements Serializable {
-    public byte[] getOctetsImageFacture() {
-        return octetsImageFacture;
-    }
 
-    public void setOctetsImageFacture(byte[] octets) {
-        this.octetsImageFacture = octets;
-    }
-
-    public static enum etat {
+    public enum etat {
         EN_POSSESSION("En possession"), PRETE("Prêté"), PERDU("Perdu");
 
-        private final String displaName;
+        private final String displayName;
 
-        public String getDisplaName(){
-            return displaName;
+        public String getDisplayName(){
+            return displayName;
         }
 
-        private etat(String displaName) {
-            this.displaName = displaName;
+        etat(String displayName) {
+            this.displayName = displayName;
         }
     }
 
     private String nom;
-    private String prix;
+    private double prix;
     private int quantite;
     private LocalDate dateAchat;
-    //private image facture
     private String emplacement;
     private etat etat;
     private byte[] octetsImageFacture;
@@ -44,10 +37,8 @@ public abstract class Objet implements Serializable {
         return nom;
     }
 
-    protected void setPrix(String prix) {
-        this.prix = prix;
-    }
-    public String getPrix() {
+    protected void setPrix(double prix) {this.prix = prix;}
+    public double getPrix() {
         return prix;
     }
 
@@ -60,9 +51,6 @@ public abstract class Objet implements Serializable {
     }
 
     protected void setQuantite(int quantite) {
-        if (quantite < 0) {
-            throw new IllegalArgumentException("La quantité ne peut pas être négative");
-        }
         this.quantite = quantite;
     }
     public int getQuantite() {
@@ -80,6 +68,14 @@ public abstract class Objet implements Serializable {
     }
     public etat getEtat() {
         return etat;
+    }
+
+    public byte[] getOctetsImageFacture() {
+        return octetsImageFacture;
+    }
+
+    public void setOctetsImageFacture(byte[] octets) {
+        this.octetsImageFacture = octets;
     }
 
     public abstract String getDescription();

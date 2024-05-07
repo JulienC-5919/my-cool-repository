@@ -83,6 +83,7 @@ public final class AnalyseurChaineDifficile {
      * @param s String à convertir
      * @return s converti en LocalDate
      */
+    @Deprecated
     public static LocalDate parseLocalDate(String s) {
         s = s.replaceAll("[^0-9-]", "");
         LocalDate retour; //Date à retourner
@@ -212,5 +213,34 @@ public final class AnalyseurChaineDifficile {
         }
 
         return jourMax;
+    }
+
+    /**
+     * Convertit une String difficile en short représentant une année
+     * @param s String à convertir
+     * @return s converti en année
+     */
+    public static short parseAnnee(String s) {
+        short retour; // Entier à retourner
+
+        s = s.replaceAll("\\D", "");
+
+        if (s.isEmpty()) {
+            retour = 0;
+        } else {
+            try {
+                retour = Short.parseShort(s);
+
+                if (retour > 9999) {
+                    retour = 9999;
+                }
+
+                //Si l'exception est lancée, le s est trop grand pour un int, alors remplacer par la valeur maximum
+            } catch (NumberFormatException e) {
+                retour = 9999;
+            }
+        }
+
+        return retour;
     }
 }

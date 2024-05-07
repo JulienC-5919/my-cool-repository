@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+@Deprecated
 public class Test extends Application{
     public static void main(String[] args) {
         launch();
@@ -45,7 +45,7 @@ public class Test extends Application{
         TextField r = new TextField();
         Scene scene = new Scene(rootFacture, 200, 200);
 
-        CorrecteursTextFields.ajouterCorrecteurPrix(r);
+        //CorrecteursTextFields.ajouterCorrecteurPrix(r);
 
         rootFacture.getChildren().addAll(imageFacture,r);
 
@@ -54,5 +54,7 @@ public class Test extends Application{
 
 
         stage.show();
+
+
     }
 }

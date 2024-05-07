@@ -20,24 +20,28 @@ import javafx.scene.control.TableColumn;
 
 
 import java.io.*;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class Main extends Application {
 
-    // false si des modifications non sauvegardées risquent d'être perdues accidentellement.
+    // true si toutes les modifications sont sauvegardées, ou si l'utilisateur souhaite quitter sans sauvegarder.
     private boolean sauvegarde = true;
     private Stage stage;
     private TableView<Objet> tvObjets;
 
     private HBox hbBarreOutils;
-    private VBox vbBarreHaut;
-    private final VBox vbMenuGauche;
+    private VBox vbBarreHaut; // Contient la barre de menu fichier et la barre de recherche
+    private final VBox vbMenuDroit; //Menu pour créer / voir / modifier des objets
 
     private TextField txfRecherche;
 
     private MenuBar mbFichier;
 
+    // Classes privées pour mieux gérer les section du menu droit.
     private final NouvelObjetHaut sectionHautNouvelObjet = new NouvelObjetHaut();
     private final NouvelObjetBas sectionBasNouvelObjet = new NouvelObjetBas();
     private final SectionGenerale sectionGenerale = new SectionGenerale();
@@ -45,6 +49,7 @@ public class Main extends Application {
     private final SectionOutil sectionOutil = new SectionOutil();
     private final SectionJeu sectionJeu = new SectionJeu();
 
+    //Classe privée sérialisable contenant tous les objets
     private ListesObjets listesObjets = new ListesObjets();
 
     private final ToggleButton tbtnOutil = new ToggleButton("\uD83D\uDD27");
@@ -67,20 +72,26 @@ public class Main extends Application {
 
     ObservableList<Objet> objets = FXCollections.observableArrayList();
 
+    /**
+     * À l'instantiation, préparer chaque division de la fenêtre principale
+     */
     public Main() {
-        preparerBarreOutils();
+        preparerBarreRecherche();
         preparerBarreFichier();
         preparerBarreHaut();
-        preparerSectionsGauche();
+        preparerSectionsDroite();
 
         preparerTableView();
-        vbMenuGauche = new VBox();
-        vbMenuGauche.setMinWidth(300);
+        vbMenuDroit = new VBox();
+        vbMenuDroit.setMinWidth(300);
 
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier DAT (*.dat)","*.dat"));
     }
 
-
+    /**
+     * Prépare la fenêtre principale puis l'affiche
+     * @param stage Fenêtre
+     */
     @Override
     public void start(Stage stage) {
         this.stage = stage;
@@ -97,7 +108,7 @@ public class Main extends Application {
 
         root.setTop(vbBarreHaut);
         root.setCenter(tvObjets);
-        root.setRight(vbMenuGauche);
+        root.setRight(vbMenuDroit);
 
         stage.setMinWidth(1000);
         stage.setMinHeight(650);
@@ -113,7 +124,10 @@ public class Main extends Application {
         launch();
     }
 
-    private void preparerBarreOutils() {
+    /**
+     * Prépare la barre de recherche
+     */
+    private void preparerBarreRecherche() {
         hbBarreOutils = new HBox();
 
         hbBarreOutils.setSpacing(5);
@@ -147,6 +161,9 @@ public class Main extends Application {
         );
     }
 
+    /**
+     * Regroupe la barre de recherche et le menu fichier dans vbBarreHaut
+     */
     private void preparerBarreHaut() {
         vbBarreHaut = new VBox();
 
@@ -156,6 +173,9 @@ public class Main extends Application {
         vbBarreHaut.getChildren().addAll(mbFichier, hbBarreOutils, new Separator(Orientation.HORIZONTAL));
     }
 
+    /**
+     *Prépare la barre de menus Fichier
+     */
     private void preparerBarreFichier() {
         mbFichier = new MenuBar();
         Menu menuFichier = new Menu("Fichier");
@@ -189,7 +209,9 @@ public class Main extends Application {
     }
 
 
-
+    /**
+     *Prépare le TableView et les colonnes
+     */
     private void preparerTableView() {
         tvObjets = new TableView<Objet>();
 
@@ -220,7 +242,490 @@ public class Main extends Application {
         tvObjets.setItems(objets);
     }
 
+    /**
+     * Charge une section dans le menu à droite selon un numéro donné
+     * @param numeroSection Numéro de la section à afficher
+     */
+    private void chargerSection(int numeroSection) {
+        sectionBasNouvelObjet.btnAjouter.setDisable(false);
+
+        if (vbMenuDroit.getChildren().size() == 2) {
+            vbMenuDroit.getChildren().add(1, sectionGenerale.charger());
+
+            switch (numeroSection) {
+                case 0 -> {
+                    vbMenuDroit.getChildren().add(2, sectionLivre.charger());
+                }
+                case 1 -> {
+                    vbMenuDroit.getChildren().add(2, sectionOutil.charger());
+                }
+                default -> {
+                    vbMenuDroit.getChildren().add(2, sectionJeu.charger());
+                }
+            }
+        }
+        else {
+
+            switch (numeroSection) {
+                case 0 -> {
+                    vbMenuDroit.getChildren().set(2, sectionLivre.charger());
+                }
+                case 1 -> {
+                    vbMenuDroit.getChildren().set(2, sectionOutil.charger());
+                }
+                case 2 -> {
+                    vbMenuDroit.getChildren().set(2, sectionJeu.charger());
+                }
+            }
+        }
+    }
+
+    /**
+     * Crée un objet selon le type décidé (Livre / Outil / Jeu) puis l'ajoute à la List correspondante
+     */
+    private void creerObjetSelonType() {
+        switch (sectionHautNouvelObjet.getSelection()) {
+            case 0 -> {
+                Livre livre = new Livre();
+                remplirValeursObjet(livre);
+                remplirValeursLivre(livre);
+                listesObjets.livres.add(livre);
+            }
+
+            case 1 -> {
+                Outil outil = new Outil();
+                remplirValeursObjet(outil);
+                remplirValeursOutil(outil);
+                listesObjets.outils.add(outil);
+            }
+
+            default -> {
+                Jeu jeu = new Jeu();
+                remplirValeursObjet(jeu);
+                remplirValeursJeu(jeu);
+                listesObjets.jeux.add(jeu);
+            }
+        }
+
+        rechargerObjets();
+        sauvegarde = false;
+    }
+
+    /**
+     * Remplit les valeurs d'un Objet depuis la section générale
+     * @param objet Objet dont il faut remplir les valeurs
+     */
+    private void remplirValeursObjet(Objet objet) {
+        objet.setNom(sectionGenerale.getNom());
+        objet.setPrix(sectionGenerale.getPrix());
+        objet.setQuantite(sectionGenerale.getQuantite());
+        objet.setDateAchat(sectionGenerale.getDateAchat());
+        objet.setOctetsImageFacture(sectionGenerale.getOctetsImageFacture());
+
+        switch (sectionGenerale.getNumeroEtat()) {
+            case 0 -> {
+                objet.setEtat(Objet.etat.EN_POSSESSION);
+            }
+            case 1 -> {
+                objet.setEtat(Objet.etat.PRETE);
+            }
+            default -> {
+                objet.setEtat(Objet.etat.PERDU);
+            }
+        }
+        objet.setEmplacement(sectionGenerale.getEmplacement());
+
+        vbMenuDroit.getChildren().clear();
+    }
+
+    /**
+     * Remplit les valeurs spécifiques à un Outil depuis la section outil
+     * @param outil Outil dont il faut remplir les valeurs
+     */
+    private void remplirValeursOutil(Outil outil) {
+        outil.setMarque(sectionOutil.getMarque());
+        outil.setModele(sectionOutil.getModele());
+        outil.setNumeroSerie(sectionOutil.getNumeroSerie());
+    }
+
+    /**
+     * Remplit les valeurs spécifiques à un Livre depuis la section livre
+     * @param livre Livre dont il faut remplir les valeurs
+     */
+    private void remplirValeursLivre(Livre livre) {
+        livre.setAuteur(sectionLivre.getAuteur());
+        livre.setMaisonEdition(sectionLivre.getMaisonEdition());
+        livre.setAnneeEcriture(sectionLivre.getAnneeEcriture());
+        livre.setAnneePublication(sectionLivre.getAnneePublication());
+    }
+
+    /**
+     * Remplit les valeurs spécifiques à un Jeu depuis la section jeu
+     * @param jeu Jeu dont il faut remplir les valeurs
+     */
+    private void remplirValeursJeu(Jeu jeu) {
+        jeu.setConsole(sectionJeu.getConsole());
+        jeu.setNbJoueurs(sectionJeu.getNbJoueurs());
+        jeu.setDeveloppement(sectionJeu.getDeveloppement());
+        jeu.setAnneeSortie(sectionJeu.getAnneeSortie());
+    }
+
+    /**
+     * Supprime l'objet sélectionné dans le TableView
+     */
+    private void supprimerObjet() {
+        Objet objet; //Objet à supprimer
+        int selection = tvObjets.getSelectionModel().getSelectedIndex();
+
+        if (selection < 0) {
+            if (objets.isEmpty()) {
+                afficherErreur(
+                        "Aucun objet à supprimer",
+                        "Impossible de supprimer un objet car la liste est vide."
+                );
+            }
+            else {
+                afficherErreur(
+                        "Aucun objet sélectionné",
+                        "Veuillez sélectionner un objet à supprimer dans la liste."
+                );
+            }
+        }
+        else {
+            objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
+
+            if (objet.getClass() == Livre.class) {
+                listesObjets.livres.remove(objet);
+            }
+            else if (objet.getClass() == Outil.class) {
+                listesObjets.outils.remove(objet);
+            }
+            else {
+                listesObjets.jeux.remove(objet);
+            }
+
+            rechargerObjets();
+            sauvegarde = false;
+        }
+    }
+
+    /**
+     * Affiche un pop-up erreur personnalisé
+     * @param entete Texte de l'en-tête
+     * @param details texte des détails
+     */
+    private void afficherErreur(String entete, String details) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, details);
+        alert.setHeaderText(entete);
+        alert.showAndWait();
+    }
+
+    /**
+     * Prépare le menu droit pour créer un nouvel objet
+     */
+    private void nouvelObjet() {
+        vbMenuDroit.getChildren().clear();
+        vbMenuDroit.getChildren().addAll(sectionHautNouvelObjet.charger(), sectionBasNouvelObjet.charger());
+    }
+
+    /**
+     * Charge dans le TableView les objets qui correspondent aux filtres
+     */
+    private void rechargerObjets() {
+        objets.clear();
+
+        if (tbtnLivre.isSelected()) {
+            listesObjets.livres.forEach(this::chargerSiDansRecherche);
+        }
+        if (tbtnOutil.isSelected()) {
+            listesObjets.outils.forEach(this::chargerSiDansRecherche);
+        }
+        if (tbtnJeu.isSelected()) {
+            listesObjets.jeux.forEach(this::chargerSiDansRecherche);
+        }
+    }
+
+    /**
+     * Charge un objet dans le TableView si au moins une de ses valeurs contient le texte entré dans txfRecherche
+     * @param objet objet à tester & charger
+     */
+    private void chargerSiDansRecherche(Objet objet) {
+        String recherche = txfRecherche.getText().toLowerCase();
+
+        if (
+                objet.getNom().toLowerCase().contains(recherche) ||
+                        objet.getDateAchat().toString().contains(recherche) ||
+                        objet.getDescription().toLowerCase().contains(recherche) ||
+                        objet.getEmplacement().toLowerCase().contains(recherche) ||
+                        String.valueOf(objet.getPrix()).contains(recherche) ||
+                        String.valueOf(objet.getQuantite()).contains(recherche)
+        ) {
+            switch (cbEtat.getSelectionModel().getSelectedIndex()) {
+                case 0 -> {
+                    objets.add(objet);
+                }
+                case 1 -> {
+                    if (objet.getEtat() == Objet.etat.EN_POSSESSION) {
+                        objets.add(objet);
+                    }
+                }
+                case 2 -> {
+                    if (objet.getEtat() == Objet.etat.PRETE) {
+                        objets.add(objet);
+                    }
+                }
+                default -> {
+                    if (objet.getEtat() == Objet.etat.PERDU) {
+                        objets.add(objet);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Sauvegarde les listes d'objets dans un fichier sérialisé.
+     */
+    private void sauvegarder() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(fichier);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+
+            objectOut.writeObject(listesObjets);
+
+            objectOut.close();
+            fileOut.close();
+            sauvegarde = true;
+            miRecharger.setDisable(false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Demande à l'utilisateur dans quel fichier sauvegarder les listes d'objets, puis sauvegarde
+     */
+    private void sauvegarderSous() {
+        File fichierChoisi;
+
+        fichierChoisi = fileChooser.showSaveDialog(stage);
+        if (fichierChoisi != null) {
+            fichier = fichierChoisi;
+            sauvegarder();
+        }
+    }
+
+    /**
+     * Choisir dans quel fichier sauvegarder si ce n'est pas déjà fait, ensuite sauvegarder
+     */
+    private void miSauvegarderAction() {
+        if (fichier == null) {
+            sauvegarderSous();
+        }
+        else {
+            sauvegarder();
+        }
+    }
+
+    /**
+     * Si les dernières modifications n'ont pas été sauvegardées et seront perdues après la prochaine opération,
+     * demander à l'utilisateur s'il veut les sauvegarder avant de continuer.
+     */
+    private void confirmerSauvegarder() {
+        if (!sauvegarde) {
+            ButtonType btnSauvegarder = new ButtonType("Sauvegarder", ButtonBar.ButtonData.YES);
+            ButtonType btnPasSauvegarder = new ButtonType("Ne pas sauvegarder", ButtonBar.ButtonData.NO);
+            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert fenetreSauvegarder = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Voulez-vous sauvegarder les modifications?",
+                    btnSauvegarder,
+                    btnPasSauvegarder,
+                    btnAnnuler
+            );
+            fenetreSauvegarder.setTitle("Modifications non sauvegardées");
+            fenetreSauvegarder.setHeaderText("Modifications non sauvegardées");
+
+            fenetreSauvegarder.showAndWait().ifPresent(type -> {
+                if (type == btnPasSauvegarder) {
+                    sauvegarde = true;
+                }
+                else if (type == btnSauvegarder) {
+                    miSauvegarderAction();
+                }
+            });
+
+        }
+    }
+
+    /**
+     * Demande à l'utilisateur depuis quel fichier charger les données de sauvegarde, puis le charge
+     */
+    private void ouvrirFichier() {
+        File fichierChoisi;
+
+        fichierChoisi = fileChooser.showOpenDialog(stage);
+
+        if (fichierChoisi != null) {
+            confirmerSauvegarder();
+            if (sauvegarde) {
+                fichier = fichierChoisi;
+                chargerFichier();
+            }
+        }
+    }
+
+    /**
+     * Charge les listes d'objets depuis un fichier sérialisé
+     */
+    private void chargerFichier() {
+        try {
+            FileInputStream fileIn = new FileInputStream(fichier);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+
+            listesObjets = (ListesObjets) objectIn.readObject();
+            miRecharger.setDisable(false);
+
+            reinitialiserFiltres();
+        } catch (IOException | ClassNotFoundException e) {
+            afficherErreur("Erreur d'ouverture","Le ficher est non supporté ou corrompu.");
+        }
+    }
+
+    //qwertyuiopasdfghjklzxcvbnm
+    private void exporter() {
+        //todo exporter
+    }
+
+    /**
+     * Affiche les détails de l'objet sélectionné du TableView dans le menu droit
+     * @param objet
+     */
+    private void afficherObjet(Objet objet) {
+        vbMenuDroit.getChildren().clear();
+        vbMenuDroit.getChildren().add(labObjetInventaire);
+        vbMenuDroit.getChildren().add(sectionGenerale.charger(objet));
+
+        if (objet.getClass() == Livre.class) {
+            vbMenuDroit.getChildren().add(sectionLivre.charger((Livre) objet));
+        } else if (objet.getClass() == Outil.class) {
+            vbMenuDroit.getChildren().add(sectionOutil.charger((Outil) objet));
+        } else {
+            vbMenuDroit.getChildren().add(sectionJeu.charger((Jeu) objet));
+        }
+
+        vbMenuDroit.getChildren().add(hbModifierObjet);
+    }
+
+    /**
+     * Prépare le VBox des sections du menu à droite puis les boutons modifier / fermer du menu de modification todo boutons dans une classe?
+     */
+    private void preparerSectionsDroite() {
+        Button btnModifier = new Button("Modfier");
+        Button btnFermer = new Button("Fermer");
+
+        btnModifier.setOnAction(event -> modifierObjet());
+        btnFermer.setOnAction(event -> {
+            vbMenuDroit.getChildren().clear();
+            tvObjets.getSelectionModel().clearSelection();
+        });
+
+        hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
+
+        labObjetInventaire.setFont(new Font(20));
+    }
+
+    /**
+     * Modifie les valeurs de l'objet sélectionné du TableView avec les nouvelles valeurs données dans le menu droit.
+     */
+    private void modifierObjet() {
+        Objet objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
+
+        remplirValeursObjet(objet);
+
+        if (objet.getClass() == Livre.class) {
+            remplirValeursLivre((Livre) objet);
+        } else if (objet.getClass() == Outil.class) {
+            remplirValeursOutil((Outil) objet);
+        } else {
+            remplirValeursJeu((Jeu) objet);
+        }
+
+        tvObjets.refresh();
+    }
+
+    /**
+     * Oublie le fichier de sauvegarde et supprime tous les objets
+     */
+    private void reinitialiser() {
+        miRecharger.setDisable(true);
+
+        fichier = null;
+        listesObjets.livres.clear();
+        listesObjets.outils.clear();
+        listesObjets.jeux.clear();
+
+        reinitialiserFiltres();
+    }
+
+    /**
+     * Remet les filtres à leurs valeurs initiales
+     */
+    private void reinitialiserFiltres() {
+        tbtnLivre.setSelected(true);
+        tbtnOutil.setSelected(true);
+        tbtnJeu.setSelected(true);
+
+        txfRecherche.clear();
+    }
+
+    /**
+     * Confirme si l'utilisateur veut vraiment recharger les objets depuis la dernière sauvegarde.
+     */
+    private void confirmerRecharger() {
+        if (!sauvegarde) {
+            ButtonType btnRecharger = new ButtonType("Recharger", ButtonBar.ButtonData.YES);
+            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert fenetreSauvegarder = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Toutes les modifications seront perdues.",
+                    btnRecharger,
+                    btnAnnuler
+            );
+            fenetreSauvegarder.setTitle("Recharger?");
+            fenetreSauvegarder.setHeaderText("Recharger?");
+
+            fenetreSauvegarder.showAndWait().ifPresent(type -> {
+                if (type == btnRecharger) {
+                    sauvegarde = true;
+                    chargerFichier();
+                }
+            });
+
+        }
+    }
+
+    /**
+     * Classe sérialisable qui contient les listes d'objets
+     */
+    private static class ListesObjets implements Serializable {
+        public final ArrayList<Livre> livres = new ArrayList<>();
+        public final ArrayList<Outil> outils = new ArrayList<>();
+        public final ArrayList<Jeu> jeux = new ArrayList<>();
+    }
+
+////////////////////////////////// Classes private des sections du tableau de droite ///////////////////////////////////
+
+    /**
+     * Affiche les propriétés générales d'un objet telles que le nom, le prix etc.
+     */
     private class SectionGenerale {
+
+        private double prix;
+        private LocalDate dateAchat;
+
         private final GridPane gpContenu = new GridPane();
         private final TextField txfNom = new TextField();
         private final TextField txfPrix = new TextField();
@@ -235,6 +740,10 @@ public class Main extends Application {
 
         private byte[] octetsImageFacture;
 
+        /**
+         * Place l'en-tête puis chaque champ dans un GridPane.
+         * Installe les listeners
+         */
         private SectionGenerale() {
             HBox hbSelecteurFacture = new HBox();
             StackPane spCadreFacture = new StackPane();
@@ -253,8 +762,6 @@ public class Main extends Application {
             ivFacture.setFitHeight(100);
             ivFacture.setPreserveRatio(true);
 
-            CorrecteursTextFields.ajouterCorrecteurPrix(txfPrix);
-
             btnChoisirFacture.setOnAction(e -> choisirFacture());
             ivFacture.setOnMouseClicked(e -> afficherFacture());
             ivFacture.hoverProperty().addListener(e -> {
@@ -267,9 +774,18 @@ public class Main extends Application {
             }
             );
 
+            txfPrix.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        prix = AnalyseurChaineDifficile.parseDoubleArgent(txfPrix.getText());
+                        rafraichirTxfPrix();
+                    }
+                }
+            });
+
             spCadreFacture.getChildren().add(ivFacture);
             spQuantite.setEditable(true);
-            //todo spQuantite.getEditor().textProperty().addListener(e -> System.out.println(true));
 
             hbSelecteurFacture.getChildren().addAll(spCadreFacture, btnChoisirFacture);
 
@@ -292,6 +808,10 @@ public class Main extends Application {
             gpContenu.add(txfEmplacement, 1, 7);
         }
 
+        /**
+         * Charge le GridPane avec les champs vides.
+         * @return gridpane qui contient les champs de la section générale
+         */
         private GridPane charger() {
             txfNom.clear();
             txfPrix.clear();
@@ -304,15 +824,21 @@ public class Main extends Application {
             return gpContenu;
         }
 
+        /**
+         * Charge le GridPane avec les propriétés d'un Objet affichées dans les champs.
+         * @param objet Objet dont il faut afficher les propriétés
+         * @return gridpane qui contient les champs de la section générale
+         */
         private GridPane charger(Objet objet) {
 
             octetsImageFacture = objet.getOctetsImageFacture();
 
             txfNom.setText(objet.getNom());
-            txfPrix.setText(objet.getPrix());
+            prix = objet.getPrix();
+            rafraichirTxfPrix();
             spQuantite.getValueFactory().setValue(objet.getQuantite());
             dpAchat.setValue(objet.getDateAchat());
-            //todo cbEtat.getSelectionModel().select(objet.getEtat().);
+            //todo cbEtat.getSelectionModel().select(article.getEtat().);
             txfEmplacement.setText(objet.getEmplacement());
 
             ivFacture.setImage(new Image(new ByteArrayInputStream(octetsImageFacture)));
@@ -320,6 +846,9 @@ public class Main extends Application {
             return gpContenu;
         }
 
+        /**
+         * Utilise le FileChooser pour choisir l'image de la facture
+         */
         private void choisirFacture() {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(
@@ -342,6 +871,9 @@ public class Main extends Application {
             }
         }
 
+        /**
+         * Affiche l'image de la facture dans une deuxième fenêtre.
+         */
         private void afficherFacture() {
             StackPane rootFacture = new StackPane();
             ImageView imageFacture;
@@ -365,6 +897,10 @@ public class Main extends Application {
             root.setDisable(false);
         }
 
+        /**
+         * Rend la bordure d'un Pane grise
+         * @param panneau Pane dont il faut changer la bordure
+         */
         private void bordureGrise(Pane panneau) {
             panneau.setBorder(new Border(
                     new BorderStroke(Color.LIGHTGRAY,
@@ -373,6 +909,11 @@ public class Main extends Application {
                             new BorderWidths(2))
             ));
         }
+
+        /**
+         * Rend la bordure d'un Pane bleue
+         * @param panneau Pane dont il faut changer la bordure
+         */
         private void bordureBleue(Pane panneau) {
             panneau.setBorder(new Border(
                     new BorderStroke(Color.DODGERBLUE,
@@ -382,12 +923,21 @@ public class Main extends Application {
             ));
         }
 
+        private void rafraichirTxfPrix() {
+            DecimalFormat df = new DecimalFormat("0.00$");
+            df.setGroupingSize(3);
+            df.setGroupingUsed(true);
+            df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.CANADA_FRENCH));
+
+            txfPrix.setText(df.format(prix));
+        }
+
         private String getNom() {
             return txfNom.getText();
         }
 
-        private String getPrix() {
-            return txfPrix.getText();
+        private double getPrix() {
+            return prix;
         }
 
         private int getQuantite() {
@@ -398,10 +948,12 @@ public class Main extends Application {
             return dpAchat.getValue();
         }
 
+        // L'image est stockée en tableau d'octets pour pouvoir être sérialisée.
         private byte[] getOctetsImageFacture() {
             return octetsImageFacture;
         }
-
+        //todo remplacer par getEtat
+        @Deprecated
         private int getNumeroEtat() {
             return cbEtat.getSelectionModel().getSelectedIndex();
         }
@@ -418,9 +970,38 @@ public class Main extends Application {
         private final TextField txfMaisonEdition = new TextField();
         private final TextField txfAnneeEcrture = new TextField();
         private final TextField txfAnneePublication = new TextField();
+
+        private Short anneeEcriture;
+        private Short anneePublication;
+
+        /**
+         * Place l'en-tête puis chaque champ dans un GridPane.
+         * Installe les listeners
+         */
         private SectionLivre() {
             Label entete = new Label("Secton livre");
             entete.setFont(new Font(20));
+
+            txfAnneeEcrture.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        anneeEcriture = AnalyseurChaineDifficile.parseAnnee(txfAnneeEcrture.getText());
+                        txfAnneeEcrture.setText(String.valueOf(anneeEcriture));
+                    }
+                }
+            });
+
+            txfAnneePublication.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        anneePublication = AnalyseurChaineDifficile.parseAnnee(txfAnneePublication.getText());
+                        txfAnneePublication.setText(String.valueOf(anneePublication));
+                    }
+                }
+            });
+
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -435,6 +1016,10 @@ public class Main extends Application {
             gpContenu.add(txfAnneePublication, 1, 4);
         }
 
+        /**
+         * Charge le GridPane avec les champs vides.
+         * @return gridpane qui contient les champs de la section livre
+         */
         private GridPane charger() {
             txfAuteur.clear();
             txfMaisonEdition.clear();
@@ -443,6 +1028,12 @@ public class Main extends Application {
 
             return gpContenu;
         }
+
+        /**
+         * Charge le GridPane avec les propriétés d'un Livre affichées dans les champs.
+         * @param livre Livre dont il faut afficher les propriétés
+         * @return gridpane qui contient les champs de la section livre
+         */
         private GridPane charger(Livre livre) {
             txfAuteur.setText(livre.getAuteur());
             txfMaisonEdition.setText(livre.getAuteur());
@@ -459,22 +1050,39 @@ public class Main extends Application {
             return txfMaisonEdition.getText();
         }
         private short getAnneeEcriture() {
-            return Short.parseShort(txfAnneeEcrture.getText());
+            return anneeEcriture;
         }
         private short getAnneePublication() {
-            return Short.parseShort(txfAnneePublication.getText());
+            return anneePublication;
         }
 
     }
 
     private static class SectionOutil {
+        private int numeroSerie;
+
         private final GridPane gpContenu = new GridPane();
         private final TextField txfMarque = new TextField();
         private final TextField txfModele = new TextField();
         private final TextField txfNumeroSerie = new TextField();
+
+        /**
+         * Place l'en-tête puis chaque champ dans un GridPane.
+         * Installe les listeners
+         */
         private SectionOutil() {
             Label entete = new Label("Secton outil");
             entete.setFont(new Font(20));
+
+            txfNumeroSerie.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        numeroSerie = AnalyseurChaineDifficile.parseIntPositif(txfNumeroSerie.getText());
+                        txfNumeroSerie.setText(String.valueOf(numeroSerie));
+                    }
+                }
+            });
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -487,6 +1095,10 @@ public class Main extends Application {
             gpContenu.add(txfNumeroSerie, 1, 3);
         }
 
+        /**
+         * Charge le GridPane avec les champs vides.
+         * @return gridpane qui contient les champs de la section outil
+         */
         private GridPane charger() {
             txfMarque.clear();
             txfNumeroSerie.clear();
@@ -494,6 +1106,11 @@ public class Main extends Application {
             return gpContenu;
         }
 
+        /**
+         * Charge le GridPane avec les propriétés d'un Outil affichées dans les champs.
+         * @param outil Outil dont il faut afficher les propriétés
+         * @return gridpane qui contient les champs de la section outil
+         */
         private GridPane charger(Outil outil) {
             txfMarque.setText(outil.getMarque());
             txfNumeroSerie.setText(String.valueOf(outil.getNumeroSerie()));
@@ -507,7 +1124,7 @@ public class Main extends Application {
         }
 
         private int getNumeroSerie() {
-            return Short.parseShort(txfNumeroSerie.getText());
+            return numeroSerie;
         }
 
         private String getModele() {
@@ -522,11 +1139,37 @@ public class Main extends Application {
         private final TextField txfNbJoueurs = new TextField();
         private final TextField txfDeveloppement = new TextField();
         private final TextField txfAnneeSortie = new TextField();
+
+        private int nbJoueurs;
+        private Short anneeSortie;
+
+        /**
+         * Place l'en-tête puis chaque champ dans un GridPane.
+         * Installe les listeners
+         */
         private SectionJeu() {
             Label entete = new Label("Secton jeu");
             entete.setFont(new Font(20));
 
-            //todo spinner joueurs
+            txfNbJoueurs.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        nbJoueurs = AnalyseurChaineDifficile.parseIntPositif(txfNbJoueurs.getText());
+                        txfNbJoueurs.setText(String.valueOf(nbJoueurs));
+                    }
+                }
+            });
+
+            txfAnneeSortie.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+                    if (!t1) {
+                        anneeSortie = AnalyseurChaineDifficile.parseAnnee(txfAnneeSortie.getText());
+                        txfAnneeSortie.setText(String.valueOf(anneeSortie));
+                    }
+                }
+            });
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -539,15 +1182,13 @@ public class Main extends Application {
             gpContenu.add(txfNbJoueurs, 1, 2);
             gpContenu.add(txfDeveloppement, 1, 3);
             gpContenu.add(txfAnneeSortie, 1, 4);
-            txfConsole.focusedProperty().addListener(new ChangeListener<Boolean>() {//todo remove
-                @Override
-                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    System.out.println("rrrrrrrrr");
-                }
-            });
         }
 
-        private GridPane recharger() {
+        /**
+         * Charge le GridPane avec les champs vides.
+         * @return gridpane qui contient les champs de la section jeu
+         */
+        private GridPane charger() {
             txfConsole.clear();
             txfNbJoueurs.clear();
             txfDeveloppement.clear();
@@ -556,6 +1197,11 @@ public class Main extends Application {
             return gpContenu;
         }
 
+        /**
+         * Charge le GridPane avec les propriétés d'un Jeu affichées dans les champs.
+         * @param jeu Jeu dont il faut afficher les propriétés
+         * @return gridpane qui contient les champs de la section jeu
+         */
         private GridPane charger(Jeu jeu) {
             txfConsole.setText(jeu.getConsole());
             txfNbJoueurs.setText(String.valueOf(jeu.getNbJoueurs()));
@@ -569,13 +1215,13 @@ public class Main extends Application {
             return txfConsole.getText();
         }
         private int getNbJoueurs() {
-            return Integer.parseInt(txfNbJoueurs.getText());
+            return nbJoueurs;
         }
         private String getDeveloppement() {
             return txfDeveloppement.getText();
         }
         private short getAnneeSortie() {
-            return Short.parseShort(txfAnneeSortie.getText());
+            return anneeSortie;
         }
     }
 
@@ -614,7 +1260,7 @@ public class Main extends Application {
             Button btnAnnuler = new Button("Annuler");
 
             btnAjouter.setOnAction(e -> creerObjetSelonType());
-            btnAnnuler.setOnAction(e -> vbMenuGauche.getChildren().clear());
+            btnAnnuler.setOnAction(e -> vbMenuDroit.getChildren().clear());
 
             hbContenu.getChildren().addAll(btnAjouter, btnAnnuler);
         }
@@ -624,404 +1270,4 @@ public class Main extends Application {
             return hbContenu;
         }
     }
-
-    private void chargerSection(int numeroSection) {
-        sectionBasNouvelObjet.btnAjouter.setDisable(false);
-
-        if (vbMenuGauche.getChildren().size() == 2) {
-            vbMenuGauche.getChildren().add(1, sectionGenerale.charger());
-
-            switch (numeroSection) {
-                case 0 -> {
-                    vbMenuGauche.getChildren().add(2, sectionLivre.charger());
-                }
-                case 1 -> {
-                    vbMenuGauche.getChildren().add(2, sectionOutil.charger());
-                }
-                default -> {
-                    vbMenuGauche.getChildren().add(2, sectionJeu.recharger());
-                }
-            }
-        }
-        else {
-
-            switch (numeroSection) {
-                case 0 -> {
-                    vbMenuGauche.getChildren().set(2, sectionLivre.charger());
-                }
-                case 1 -> {
-                    vbMenuGauche.getChildren().set(2, sectionOutil.charger());
-                }
-                case 2 -> {
-                    vbMenuGauche.getChildren().set(2, sectionJeu.recharger());
-                }
-            }
-        }
-    }
-
-    private void creerObjetSelonType() {
-        switch (sectionHautNouvelObjet.getSelection()) {
-            case 0 -> {
-                Livre livre = new Livre();
-
-                remplirValeursObjet(livre);
-
-                remplirValeursLivre(livre);
-
-                listesObjets.livres.add(livre);
-            }
-
-            case 1 -> {
-                Outil outil = new Outil();
-
-                remplirValeursObjet(outil);
-
-                remplirValeursOutil(outil);
-
-                listesObjets.outils.add(outil);
-            }
-
-            default -> {
-                Jeu jeu = new Jeu();
-
-                remplirValeursObjet(jeu);
-
-                remplirValeursJeu(jeu);
-
-                listesObjets.jeux.add(jeu);
-            }
-        }
-
-        rechargerObjets();
-        sauvegarde = false;
-    }
-
-    private static class ListesObjets implements Serializable {
-        public final ArrayList<Livre> livres = new ArrayList<>();
-        public final ArrayList<Outil> outils = new ArrayList<>();
-        public final ArrayList<Jeu> jeux = new ArrayList<>();
-    }
-
-    private void remplirValeursObjet(Objet objet) {
-        objet.setNom(sectionGenerale.getNom());
-        objet.setPrix(sectionGenerale.getPrix());
-        objet.setQuantite(sectionGenerale.getQuantite());
-        objet.setDateAchat(sectionGenerale.getDateAchat());
-        objet.setOctetsImageFacture(sectionGenerale.getOctetsImageFacture());
-        
-        switch (sectionGenerale.getNumeroEtat()) {
-            case 0 -> {
-                objet.setEtat(Objet.etat.EN_POSSESSION);
-            }
-            case 1 -> {
-                objet.setEtat(Objet.etat.PRETE);
-            }
-            default -> {
-                objet.setEtat(Objet.etat.PERDU);
-            }
-        }
-        objet.setEmplacement(sectionGenerale.getEmplacement());
-
-        vbMenuGauche.getChildren().clear();
-    }
-
-    private void remplirValeursOutil(Outil outil) {
-        outil.setMarque(sectionOutil.getMarque());
-        outil.setModele(sectionOutil.getModele());
-        outil.setNumeroSerie(sectionOutil.getNumeroSerie());
-    }
-
-    private void remplirValeursLivre(Livre livre) {
-        livre.setAuteur(sectionLivre.getAuteur());
-        livre.setMaisonEdition(sectionLivre.getMaisonEdition());
-        livre.setAnneeEcriture(sectionLivre.getAnneeEcriture());
-        livre.setAnneePublication(sectionLivre.getAnneePublication());
-    }
-
-    private void remplirValeursJeu(Jeu jeu) {
-        jeu.setConsole(sectionJeu.getConsole());
-        jeu.setNbJoueurs(sectionJeu.getNbJoueurs());
-        jeu.setDeveloppement(sectionJeu.getDeveloppement());
-        jeu.setAnneeSortie(sectionJeu.getAnneeSortie());
-    }
-
-    private void supprimerObjet() {
-        Objet objet; //Objet à supprimer
-        int selection = tvObjets.getSelectionModel().getSelectedIndex();
-
-        if (selection < 0) {
-            if (objets.isEmpty()) {
-                afficherErreur(
-                        "Aucun objet à supprimer",
-                        "Impossible de supprimer un objet car la liste est vide."
-                );
-            }
-            else {
-                afficherErreur(
-                        "Aucun objet sélectionné",
-                        "Veuillez sélectionner un objet à supprimer dans la liste."
-                );
-            }
-        }
-        else {
-            objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
-
-            if (objet.getClass() == Livre.class) {
-                listesObjets.livres.remove(objet);
-            }
-            else if (objet.getClass() == Outil.class) {
-                listesObjets.outils.remove(objet);
-            }
-            else {
-                listesObjets.jeux.remove(objet);
-            }
-
-            rechargerObjets();
-            sauvegarde = false;
-        }
-    }
-
-    private void afficherErreur(String entete, String details) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, details);
-        alert.setHeaderText(entete);
-        alert.showAndWait();
-    }
-
-    private void nouvelObjet() {
-        vbMenuGauche.getChildren().clear();
-        vbMenuGauche.getChildren().addAll(sectionHautNouvelObjet.charger(), sectionBasNouvelObjet.charger());
-    }
-
-    private void rechargerObjets() {
-        objets.clear();
-
-        if (tbtnLivre.isSelected()) {
-            listesObjets.livres.forEach(this::chargerSiDansRecherche);
-        }
-        if (tbtnOutil.isSelected()) {
-            listesObjets.outils.forEach(this::chargerSiDansRecherche);
-        }
-        if (tbtnJeu.isSelected()) {
-            listesObjets.jeux.forEach(this::chargerSiDansRecherche);
-        }
-    }
-    private void chargerSiDansRecherche(Objet objet) {
-        String recherche = txfRecherche.getText().toLowerCase();
-
-        if (
-                objet.getNom().toLowerCase().contains(recherche) ||
-                objet.getDateAchat().toString().contains(recherche) ||
-                objet.getDescription().toLowerCase().contains(recherche) ||
-                objet.getEmplacement().toLowerCase().contains(recherche) ||
-                objet.getPrix().contains(recherche) ||
-                String.valueOf(objet.getQuantite()).contains(recherche)
-        ) {
-            switch (cbEtat.getSelectionModel().getSelectedIndex()) {
-                case 0 -> {
-                    objets.add(objet);
-                }
-                case 1 -> {
-                    if (objet.getEtat() == Objet.etat.EN_POSSESSION) {
-                        objets.add(objet);
-                    }
-                }
-                case 2 -> {
-                    if (objet.getEtat() == Objet.etat.PRETE) {
-                        objets.add(objet);
-                    }
-                }
-                default -> {
-                    if (objet.getEtat() == Objet.etat.PERDU) {
-                        objets.add(objet);
-                    }
-                }
-            }
-        }
-    }
-
-    private void sauvegarder() {
-        try {
-            FileOutputStream fileOut = new FileOutputStream(fichier);
-            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-
-            objectOut.writeObject(listesObjets);
-
-            objectOut.close();
-            fileOut.close();
-            sauvegarde = true;
-            miRecharger.setDisable(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void sauvegarderSous() {
-        File fichierChoisi;
-
-        fichierChoisi = fileChooser.showSaveDialog(stage);
-        if (fichierChoisi != null) {
-            fichier = fichierChoisi;
-            sauvegarder();
-            miRecharger.setDisable(false);
-        }
-    }
-
-    private void miSauvegarderAction() {
-        if (fichier == null) {
-            sauvegarderSous();
-        }
-        else {
-            sauvegarder();
-        }
-    }
-
-    private void confirmerSauvegarder() {
-        if (!sauvegarde) {
-            ButtonType btnSauvegarder = new ButtonType("Sauvegarder", ButtonBar.ButtonData.YES);
-            ButtonType btnPasSauvegarder = new ButtonType("Ne pas sauvegarder", ButtonBar.ButtonData.NO);
-            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-            Alert fenetreSauvegarder = new Alert(
-                    Alert.AlertType.CONFIRMATION,
-                    "Voulez-vous sauvegarder les modifications?",
-                    btnSauvegarder,
-                    btnPasSauvegarder,
-                    btnAnnuler
-            );
-            fenetreSauvegarder.setTitle("Modifications non sauvegardées");
-            fenetreSauvegarder.setHeaderText("Modifications non sauvegardées");
-
-            fenetreSauvegarder.showAndWait().ifPresent(type -> {
-                if (type == btnPasSauvegarder) {
-                    sauvegarde = true;
-                }
-                else if (type == btnSauvegarder) {
-                    miSauvegarderAction();
-                }
-            });
-
-        }
-    }
-
-    private void ouvrirFichier() {
-        File fichierChoisi;
-
-        fichierChoisi = fileChooser.showOpenDialog(stage);
-
-        if (fichierChoisi != null) {
-            confirmerSauvegarder();
-            if (sauvegarde) {
-                fichier = fichierChoisi;
-                chargerFichier();
-            }
-        }
-    }
-    private void chargerFichier() {
-        try {
-            FileInputStream fileIn = new FileInputStream(fichier);
-            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
-
-            listesObjets = (ListesObjets) objectIn.readObject();
-            miRecharger.setDisable(false);
-
-            reinitialiserFiltres();
-        } catch (IOException | ClassNotFoundException e) {
-            afficherErreur("Erreur d'ouverture","Le ficher est non supporté ou corrompu.");
-        }
-    }
-    private void exporter() {
-        //todo exporter
-    }
-
-    private void afficherObjet(Objet objet) {
-        vbMenuGauche.getChildren().clear();
-        vbMenuGauche.getChildren().add(labObjetInventaire);
-        vbMenuGauche.getChildren().add(sectionGenerale.charger(objet));
-
-        if (objet.getClass() == Livre.class) {
-            vbMenuGauche.getChildren().add(sectionLivre.charger((Livre) objet));
-        } else if (objet.getClass() == Outil.class) {
-            vbMenuGauche.getChildren().add(sectionOutil.charger((Outil) objet));
-        } else {
-            vbMenuGauche.getChildren().add(sectionJeu.charger((Jeu) objet));
-        }
-
-        vbMenuGauche.getChildren().add(hbModifierObjet);
-    }
-
-    private void preparerSectionsGauche() {
-        Button btnModifier = new Button("Modfier");
-        Button btnFermer = new Button("Fermer");
-
-        btnModifier.setOnAction(event -> modifierObjet());
-        btnFermer.setOnAction(event -> {
-            vbMenuGauche.getChildren().clear();
-            tvObjets.getSelectionModel().clearSelection();
-        });
-
-        hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
-
-        labObjetInventaire.setFont(new Font(20));
-    }
-
-    private void modifierObjet() {
-        Objet objet = objets.get(tvObjets.getSelectionModel().getSelectedIndex());
-
-        remplirValeursObjet(objet);
-
-        if (objet.getClass() == Livre.class) {
-            remplirValeursLivre((Livre) objet);
-        } else if (objet.getClass() == Outil.class) {
-            remplirValeursOutil((Outil) objet);
-        } else {
-            remplirValeursJeu((Jeu) objet);
-        }
-
-        tvObjets.refresh();
-    }
-
-    private void reinitialiser() {
-        miRecharger.setDisable(true);
-
-        fichier = null;
-        listesObjets.livres.clear();
-        listesObjets.outils.clear();
-        listesObjets.jeux.clear();
-
-        reinitialiserFiltres();
-    }
-
-    private void reinitialiserFiltres() {
-        tbtnLivre.setSelected(true);
-        tbtnOutil.setSelected(true);
-        tbtnJeu.setSelected(true);
-
-        txfRecherche.clear();
-    }
-
-    private void confirmerRecharger() {
-        if (!sauvegarde) {
-            ButtonType btnRecharger = new ButtonType("Recharger", ButtonBar.ButtonData.YES);
-            ButtonType btnAnnuler = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-            Alert fenetreSauvegarder = new Alert(
-                    Alert.AlertType.CONFIRMATION,
-                    "Toutes les modifications seront perdues.",
-                    btnRecharger,
-                    btnAnnuler
-            );
-            fenetreSauvegarder.setTitle("Recharger?");
-            fenetreSauvegarder.setHeaderText("Recharger?");
-
-            fenetreSauvegarder.showAndWait().ifPresent(type -> {
-                if (type == btnRecharger) {
-                    sauvegarde = true;
-                    chargerFichier();
-                }
-            });
-
-        }
-    }
-
-    private static void selectionnerTexteQuandClique()
 }
