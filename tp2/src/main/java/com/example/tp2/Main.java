@@ -1,11 +1,14 @@
 package com.example.tp2;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -18,7 +21,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.control.TableColumn;
 
-
 import java.io.*;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -30,6 +32,8 @@ public class Main extends Application {
 
     // true si toutes les modifications sont sauvegardées, ou si l'utilisateur souhaite quitter sans sauvegarder.
     private boolean sauvegarde = true;
+    private final DecimalFormat formatteurPrix = new DecimalFormat("0.00$");
+
     private Stage stage;
     private TableView<Objet> tvObjets;
 
@@ -80,10 +84,13 @@ public class Main extends Application {
         preparerBarreFichier();
         preparerBarreHaut();
         preparerSectionsDroite();
+        preparerFormatteurPrix();
 
         preparerTableView();
         vbMenuDroit = new VBox();
-        vbMenuDroit.setMinWidth(300);
+        vbMenuDroit.setMinWidth(360);
+        vbMenuDroit.setSpacing(15);
+        vbMenuDroit.setPadding(new Insets(5));
 
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier DAT (*.dat)","*.dat"));
     }
@@ -94,6 +101,9 @@ public class Main extends Application {
      */
     @Override
     public void start(Stage stage) {
+        Separator s = new Separator(Orientation.VERTICAL);
+        s.setPrefSize(50, 0);
+
         this.stage = stage;
 
         stage.setOnCloseRequest(event -> {
@@ -103,14 +113,11 @@ public class Main extends Application {
             }
         });
 
-        root.setMinHeight(650);
-        root.setMinWidth(1000);
-
         root.setTop(vbBarreHaut);
         root.setCenter(tvObjets);
-        root.setRight(vbMenuDroit);
+        root.setRight(new HBox(s, vbMenuDroit));
 
-        stage.setMinWidth(1000);
+        stage.setMinWidth(1350);
         stage.setMinHeight(650);
 
         Scene scene = new Scene(root);
@@ -131,6 +138,8 @@ public class Main extends Application {
         hbBarreOutils = new HBox();
 
         hbBarreOutils.setSpacing(5);
+
+        hbBarreOutils.setAlignment(Pos.CENTER_LEFT);
 
         Button btnAjouterObjet = new Button("➕");
         Button btnSupprimerObjet = new Button("➖");
@@ -168,7 +177,6 @@ public class Main extends Application {
         vbBarreHaut = new VBox();
 
         vbBarreHaut.setSpacing(5);
-        //todo remove barreHaut.setPadding(new Insets(0, 0, 5, 0));
 
         vbBarreHaut.getChildren().addAll(mbFichier, hbBarreOutils, new Separator(Orientation.HORIZONTAL));
     }
@@ -186,7 +194,7 @@ public class Main extends Application {
         MenuItem miExporter = new MenuItem("Exporter");
         MenuItem miNouveau = new MenuItem("Nouveau");
 
-        //todo ajouter actions
+        //todo ajouter exporter
         miOuvrir.setOnAction(e -> ouvrirFichier());
 
         miSauvegarder.setOnAction(e -> miSauvegarderAction());
@@ -217,14 +225,28 @@ public class Main extends Application {
 
         TableColumn<Objet, String> tcNom = new TableColumn<Objet, String>("Nom");
         TableColumn<Objet, String> tcDescription = new TableColumn<Objet, String>("Description");
-        TableColumn<Objet, String> tcEtat = new TableColumn(); //todo état
+        TableColumn<Objet, String> tcEtat = new TableColumn<Objet, String>("État");
         TableColumn<Objet, LocalDate> tcDateAchat = new TableColumn<Objet, LocalDate>("Date d'achat");
         TableColumn<Objet, String> tcPrix = new TableColumn<Objet, String>("Prix");
 
+        tcNom.setResizable(false);
+        tcDescription.setResizable(false);
+        tcEtat.setResizable(false);
+        tcDateAchat.setResizable(false);
+        tcPrix.setResizable(false);
+
+        tcNom.setPrefWidth(150);
+        tcDescription.setPrefWidth(500);
+        tcEtat.setPrefWidth(100);
+        tcDateAchat.setPrefWidth(100);
+
         tcNom.setCellValueFactory(new PropertyValueFactory<Objet, String>("nom"));
         tcDescription.setCellValueFactory(new PropertyValueFactory<Objet, String>("description"));
+        tcEtat.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getEtat().getDisplayName()));
         tcDateAchat.setCellValueFactory(new PropertyValueFactory<Objet, LocalDate>("dateAchat"));
-        tcPrix.setCellValueFactory(new PropertyValueFactory<Objet, String>("prix"));
+        tcPrix.setCellValueFactory(cellData -> new SimpleStringProperty(
+                formatteurPrix.format(cellData.getValue().getPrix()))
+        );
 
         tvObjets.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -237,7 +259,7 @@ public class Main extends Application {
             }
         });
 
-        tvObjets.getColumns().addAll(tcNom, tcDescription, tcDateAchat, tcPrix);
+        tvObjets.getColumns().addAll(tcNom, tcDescription, tcEtat, tcDateAchat, tcPrix);
 
         tvObjets.setItems(objets);
     }
@@ -284,31 +306,36 @@ public class Main extends Application {
      * Crée un objet selon le type décidé (Livre / Outil / Jeu) puis l'ajoute à la List correspondante
      */
     private void creerObjetSelonType() {
-        switch (sectionHautNouvelObjet.getSelection()) {
-            case 0 -> {
-                Livre livre = new Livre();
-                remplirValeursObjet(livre);
-                remplirValeursLivre(livre);
-                listesObjets.livres.add(livre);
+        try {
+            switch (sectionHautNouvelObjet.getSelection()) {
+                case 0 -> {
+                    Livre livre = new Livre();
+                    remplirValeursObjet(livre);
+                    remplirValeursLivre(livre);
+                    listesObjets.livres.add(livre);
+                }
+
+                case 1 -> {
+                    Outil outil = new Outil();
+                    remplirValeursObjet(outil);
+                    remplirValeursOutil(outil);
+                    listesObjets.outils.add(outil);
+                }
+
+                default -> {
+                    Jeu jeu = new Jeu();
+                    remplirValeursObjet(jeu);
+                    remplirValeursJeu(jeu);
+                    listesObjets.jeux.add(jeu);
+                }
             }
 
-            case 1 -> {
-                Outil outil = new Outil();
-                remplirValeursObjet(outil);
-                remplirValeursOutil(outil);
-                listesObjets.outils.add(outil);
-            }
-
-            default -> {
-                Jeu jeu = new Jeu();
-                remplirValeursObjet(jeu);
-                remplirValeursJeu(jeu);
-                listesObjets.jeux.add(jeu);
-            }
+            vbMenuDroit.getChildren().clear();
+            rechargerObjets();
+            sauvegarde = false;
+        } catch (IllegalArgumentException e) {
+            afficherErreur("Donnée manquante", e.getMessage());
         }
-
-        rechargerObjets();
-        sauvegarde = false;
     }
 
     /**
@@ -322,20 +349,8 @@ public class Main extends Application {
         objet.setDateAchat(sectionGenerale.getDateAchat());
         objet.setOctetsImageFacture(sectionGenerale.getOctetsImageFacture());
 
-        switch (sectionGenerale.getNumeroEtat()) {
-            case 0 -> {
-                objet.setEtat(Objet.etat.EN_POSSESSION);
-            }
-            case 1 -> {
-                objet.setEtat(Objet.etat.PRETE);
-            }
-            default -> {
-                objet.setEtat(Objet.etat.PERDU);
-            }
-        }
+        objet.setEtat(sectionGenerale.getEtat());
         objet.setEmplacement(sectionGenerale.getEmplacement());
-
-        vbMenuDroit.getChildren().clear();
     }
 
     /**
@@ -600,7 +615,7 @@ public class Main extends Application {
 
     /**
      * Affiche les détails de l'objet sélectionné du TableView dans le menu droit
-     * @param objet
+     * @param objet objet à afficher
      */
     private void afficherObjet(Objet objet) {
         vbMenuDroit.getChildren().clear();
@@ -626,10 +641,9 @@ public class Main extends Application {
         Button btnFermer = new Button("Fermer");
 
         btnModifier.setOnAction(event -> modifierObjet());
-        btnFermer.setOnAction(event -> {
-            vbMenuDroit.getChildren().clear();
-            tvObjets.getSelectionModel().clearSelection();
-        });
+        btnFermer.setOnAction(event -> fermerObjet());
+
+        hbModifierObjet.setSpacing(5);
 
         hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
 
@@ -644,15 +658,24 @@ public class Main extends Application {
 
         remplirValeursObjet(objet);
 
-        if (objet.getClass() == Livre.class) {
-            remplirValeursLivre((Livre) objet);
-        } else if (objet.getClass() == Outil.class) {
-            remplirValeursOutil((Outil) objet);
-        } else {
-            remplirValeursJeu((Jeu) objet);
-        }
+        try {
+            if (objet.getClass() == Livre.class) {
+                remplirValeursLivre((Livre) objet);
+            } else if (objet.getClass() == Outil.class) {
+                remplirValeursOutil((Outil) objet);
+            } else {
+                remplirValeursJeu((Jeu) objet);
+            }
 
-        tvObjets.refresh();
+            tvObjets.refresh();
+        } catch (IllegalArgumentException e) {
+            afficherErreur("Donnée manquante", e.getMessage());
+        }
+    }
+
+    private void fermerObjet() {
+        vbMenuDroit.getChildren().clear();
+        tvObjets.getSelectionModel().clearSelection();
     }
 
     /**
@@ -707,6 +730,12 @@ public class Main extends Application {
         }
     }
 
+    private void preparerFormatteurPrix() {
+        formatteurPrix.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.CANADA_FRENCH));
+        formatteurPrix.setGroupingSize(3);
+        formatteurPrix.setGroupingUsed(true);
+    }
+
     /**
      * Classe sérialisable qui contient les listes d'objets
      */
@@ -722,9 +751,6 @@ public class Main extends Application {
      * Affiche les propriétés générales d'un objet telles que le nom, le prix etc.
      */
     private class SectionGenerale {
-
-        private double prix;
-        private LocalDate dateAchat;
 
         private final GridPane gpContenu = new GridPane();
         private final TextField txfNom = new TextField();
@@ -745,6 +771,10 @@ public class Main extends Application {
          * Installe les listeners
          */
         private SectionGenerale() {
+
+            gpContenu.setVgap(5);
+            gpContenu.getColumnConstraints().add(new ColumnConstraints(150));
+
             HBox hbSelecteurFacture = new HBox();
             StackPane spCadreFacture = new StackPane();
 
@@ -777,9 +807,8 @@ public class Main extends Application {
             txfPrix.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        prix = AnalyseurChaineDifficile.parseDoubleArgent(txfPrix.getText());
-                        rafraichirTxfPrix();
+                    if (!(t1 || txfPrix.getText().isEmpty())) {
+                        formatterPrixString();
                     }
                 }
             });
@@ -834,11 +863,10 @@ public class Main extends Application {
             octetsImageFacture = objet.getOctetsImageFacture();
 
             txfNom.setText(objet.getNom());
-            prix = objet.getPrix();
-            rafraichirTxfPrix();
+            txfPrix.setText(formatteurPrix.format(objet.getPrix()));
             spQuantite.getValueFactory().setValue(objet.getQuantite());
             dpAchat.setValue(objet.getDateAchat());
-            //todo cbEtat.getSelectionModel().select(article.getEtat().);
+            cbEtat.getSelectionModel().select(objet.getEtat().ordinal());
             txfEmplacement.setText(objet.getEmplacement());
 
             ivFacture.setImage(new Image(new ByteArrayInputStream(octetsImageFacture)));
@@ -916,28 +944,82 @@ public class Main extends Application {
          */
         private void bordureBleue(Pane panneau) {
             panneau.setBorder(new Border(
-                    new BorderStroke(Color.DODGERBLUE,
-                            BorderStrokeStyle.SOLID,
-                            CornerRadii.EMPTY,
-                            new BorderWidths(2))
-            ));
+                new BorderStroke(Color.DODGERBLUE,
+                        BorderStrokeStyle.SOLID,
+                        CornerRadii.EMPTY,
+                        new BorderWidths(2))
+                )
+            );
         }
 
-        private void rafraichirTxfPrix() {
-            DecimalFormat df = new DecimalFormat("0.00$");
-            df.setGroupingSize(3);
-            df.setGroupingUsed(true);
-            df.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.CANADA_FRENCH));
+        /**
+         * Corrige les erreurs du mieux possible dans txfPrix puis affiche le prix en dollars
+         */
+        private void formatterPrixString() {
+            String prix = txfPrix.getText();
+            StringBuilder builder = new StringBuilder();
 
-            txfPrix.setText(df.format(prix));
+            int i = 0;
+            int decimales;
+
+            //Chiffres avant la virgule
+
+            while (i < prix.length() && prix.charAt(i) != '.' && prix.charAt(i) != ',') {
+                if (prix.charAt(i) >= '0' && prix.charAt(i) <= '9') {
+                    builder.append(prix.charAt(i));
+                }
+
+                i++;
+            }
+
+            if (builder.isEmpty()) {
+                builder.append('0');
+            }
+
+            //virgule
+
+            builder.append(',');
+            decimales = 0;
+
+            i++;
+
+            //Chiffres après la virgule
+
+            while (i < prix.length() && decimales < 2) {
+                if (prix.charAt(i) >= '0' && prix.charAt(i) <= '9') {
+                    builder.append(prix.charAt(i));
+                    decimales++;
+                }
+
+                i++;
+            }
+            builder.append("0".repeat(2 - decimales));
+
+            //Espaces
+
+            i = builder.length() - 6;
+
+            while (i > 0) {
+                builder.insert(i, ' ');
+
+                i -= 3;
+            }
+
+            txfPrix.setText(builder.append('$').toString());
         }
 
         private String getNom() {
+            if (txfNom.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer un nom.");
+            }
             return txfNom.getText();
         }
 
         private double getPrix() {
-            return prix;
+            if (txfPrix.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer un prix.");
+            }
+            return Double.parseDouble(txfPrix.getText().replaceAll("[ $]", "").replace(',', '.'));
         }
 
         private int getQuantite() {
@@ -945,6 +1027,9 @@ public class Main extends Application {
         }
 
         private LocalDate getDateAchat() {
+            if (dpAchat.getValue() == null) {
+                throw new IllegalArgumentException("Veuillez entrer une date d'achat valide.");
+            }
             return dpAchat.getValue();
         }
 
@@ -952,13 +1037,18 @@ public class Main extends Application {
         private byte[] getOctetsImageFacture() {
             return octetsImageFacture;
         }
-        //todo remplacer par getEtat
-        @Deprecated
-        private int getNumeroEtat() {
-            return cbEtat.getSelectionModel().getSelectedIndex();
+
+        private Objet.etat getEtat() {
+            if (cbEtat.getSelectionModel().getSelectedIndex() < 0) {
+                throw new IllegalArgumentException("Veuillez sélectionner un état.");
+            }
+            return Objet.etat.values()[cbEtat.getSelectionModel().getSelectedIndex()];
         }
 
         private String getEmplacement() {
+            if (txfEmplacement.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer un emplacement.");
+            }
             return txfEmplacement.getText();
         }
     }
@@ -971,14 +1061,14 @@ public class Main extends Application {
         private final TextField txfAnneeEcrture = new TextField();
         private final TextField txfAnneePublication = new TextField();
 
-        private Short anneeEcriture;
-        private Short anneePublication;
-
         /**
          * Place l'en-tête puis chaque champ dans un GridPane.
          * Installe les listeners
          */
         private SectionLivre() {
+            gpContenu.setVgap(5);
+            gpContenu.getColumnConstraints().add(new ColumnConstraints(150));
+
             Label entete = new Label("Secton livre");
             entete.setFont(new Font(20));
 
@@ -986,22 +1076,25 @@ public class Main extends Application {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
                     if (!t1) {
-                        anneeEcriture = AnalyseurChaineDifficile.parseAnnee(txfAnneeEcrture.getText());
-                        txfAnneeEcrture.setText(String.valueOf(anneeEcriture));
+                        txfAnneeEcrture.setText(txfAnneeEcrture.getText().replaceAll("\\D", ""));
+                        if (txfAnneeEcrture.getText().length() > 4) {
+                            txfAnneeEcrture.setText("9999");
+                        }
                     }
                 }
             });
-
+//todo 0 si réponse invalide
             txfAnneePublication.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
                     if (!t1) {
-                        anneePublication = AnalyseurChaineDifficile.parseAnnee(txfAnneePublication.getText());
-                        txfAnneePublication.setText(String.valueOf(anneePublication));
+                        txfAnneePublication.setText(txfAnneePublication.getText().replaceAll("\\D", ""));
+                        if (txfAnneePublication.getText().length() > 4) {
+                            txfAnneePublication.setText("9999");
+                        }
                     }
                 }
             });
-
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -1036,7 +1129,7 @@ public class Main extends Application {
          */
         private GridPane charger(Livre livre) {
             txfAuteur.setText(livre.getAuteur());
-            txfMaisonEdition.setText(livre.getAuteur());
+            txfMaisonEdition.setText(livre.getMaisonEdition());
             txfAnneeEcrture.setText(String.valueOf(livre.getAnneeEcriture()));
             txfAnneePublication.setText(String.valueOf(livre.getAnneePublication()));
 
@@ -1044,23 +1137,33 @@ public class Main extends Application {
         }
 
         private String getAuteur() {
+            if (txfAuteur.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer l'auteur.");
+            }
             return txfAuteur.getText();
         }
         private String getMaisonEdition() {
+            if (txfMaisonEdition.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer la maison d'édition.");
+            }
             return txfMaisonEdition.getText();
         }
         private short getAnneeEcriture() {
-            return anneeEcriture;
+            if (txfAnneeEcrture.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer l'année d'écriture.");
+            }
+            return Short.parseShort(txfAnneeEcrture.getText());
         }
         private short getAnneePublication() {
-            return anneePublication;
+            if (txfAnneePublication.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer l'année de publication.");
+            }
+            return Short.parseShort(txfAnneePublication.getText());
         }
 
     }
 
     private static class SectionOutil {
-        private int numeroSerie;
-
         private final GridPane gpContenu = new GridPane();
         private final TextField txfMarque = new TextField();
         private final TextField txfModele = new TextField();
@@ -1071,18 +1174,12 @@ public class Main extends Application {
          * Installe les listeners
          */
         private SectionOutil() {
+
+            gpContenu.setVgap(5);
+            gpContenu.getColumnConstraints().add(new ColumnConstraints(150));
+
             Label entete = new Label("Secton outil");
             entete.setFont(new Font(20));
-
-            txfNumeroSerie.focusedProperty().addListener(new ChangeListener<Boolean>() {
-                @Override
-                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        numeroSerie = AnalyseurChaineDifficile.parseIntPositif(txfNumeroSerie.getText());
-                        txfNumeroSerie.setText(String.valueOf(numeroSerie));
-                    }
-                }
-            });
 
             gpContenu.add(entete, 0, 0, 2, 1);
 
@@ -1113,21 +1210,30 @@ public class Main extends Application {
          */
         private GridPane charger(Outil outil) {
             txfMarque.setText(outil.getMarque());
-            txfNumeroSerie.setText(String.valueOf(outil.getNumeroSerie()));
+            txfNumeroSerie.setText(outil.getNumeroSerie());
             txfMarque.setText(outil.getMarque());
 
             return gpContenu;
         }
 
         private String getMarque() {
+            if (txfMarque.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer la marque.");
+            }
             return txfMarque.getText();
         }
 
-        private int getNumeroSerie() {
-            return numeroSerie;
+        private String getNumeroSerie() {
+            if (txfNumeroSerie.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer le numéro de série.");
+            }
+            return txfNumeroSerie.getText();
         }
 
         private String getModele() {
+            if (txfModele.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer le modèle.");
+            }
             return txfModele.getText();
         }
     }
@@ -1136,37 +1242,32 @@ public class Main extends Application {
         private final GridPane gpContenu = new GridPane();
 
         private final TextField txfConsole = new TextField();
-        private final TextField txfNbJoueurs = new TextField();
+        private final Spinner<Integer> spNbJoueurs = new Spinner<Integer>();
         private final TextField txfDeveloppement = new TextField();
         private final TextField txfAnneeSortie = new TextField();
-
-        private int nbJoueurs;
-        private Short anneeSortie;
 
         /**
          * Place l'en-tête puis chaque champ dans un GridPane.
          * Installe les listeners
          */
         private SectionJeu() {
+
+            gpContenu.setVgap(5);
+            gpContenu.getColumnConstraints().add(new ColumnConstraints(150));
+
             Label entete = new Label("Secton jeu");
             entete.setFont(new Font(20));
 
-            txfNbJoueurs.focusedProperty().addListener(new ChangeListener<Boolean>() {
-                @Override
-                public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        nbJoueurs = AnalyseurChaineDifficile.parseIntPositif(txfNbJoueurs.getText());
-                        txfNbJoueurs.setText(String.valueOf(nbJoueurs));
-                    }
-                }
-            });
+            spNbJoueurs.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE));
 
             txfAnneeSortie.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
                     if (!t1) {
-                        anneeSortie = AnalyseurChaineDifficile.parseAnnee(txfAnneeSortie.getText());
-                        txfAnneeSortie.setText(String.valueOf(anneeSortie));
+                        txfAnneeSortie.setText(txfAnneeSortie.getText().replaceAll("\\D", ""));
+                        if (txfAnneeSortie.getText().length() > 4) {
+                            txfAnneeSortie.setText("9999");
+                        }
                     }
                 }
             });
@@ -1179,7 +1280,7 @@ public class Main extends Application {
             gpContenu.add(new Label("Année de sortie:"), 0, 4);
 
             gpContenu.add(txfConsole, 1, 1);
-            gpContenu.add(txfNbJoueurs, 1, 2);
+            gpContenu.add(spNbJoueurs, 1, 2);
             gpContenu.add(txfDeveloppement, 1, 3);
             gpContenu.add(txfAnneeSortie, 1, 4);
         }
@@ -1190,7 +1291,7 @@ public class Main extends Application {
          */
         private GridPane charger() {
             txfConsole.clear();
-            txfNbJoueurs.clear();
+            spNbJoueurs.getValueFactory().setValue(1);
             txfDeveloppement.clear();
             txfAnneeSortie.clear();
 
@@ -1203,25 +1304,35 @@ public class Main extends Application {
          * @return gridpane qui contient les champs de la section jeu
          */
         private GridPane charger(Jeu jeu) {
+
             txfConsole.setText(jeu.getConsole());
-            txfNbJoueurs.setText(String.valueOf(jeu.getNbJoueurs()));
+            spNbJoueurs.getValueFactory().setValue(jeu.getNbJoueurs());
             txfDeveloppement.setText(String.valueOf(jeu.getDeveloppement()));
-            txfAnneeSortie.setText(String.valueOf(jeu.getanneeSortie()));
+            txfAnneeSortie.setText(String.valueOf(jeu.getAnneeSortie()));
 
             return gpContenu;
         }
 
         private String getConsole() {
+            if (txfConsole.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer la console.");
+            }
             return txfConsole.getText();
         }
         private int getNbJoueurs() {
-            return nbJoueurs;
+            return spNbJoueurs.getValue();
         }
         private String getDeveloppement() {
+            if (txfDeveloppement.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer la compagnie de développement.");
+            }
             return txfDeveloppement.getText();
         }
         private short getAnneeSortie() {
-            return anneeSortie;
+            if (txfAnneeSortie.getText().isEmpty()) {
+                throw new IllegalArgumentException("Veuillez entrer l'année de sortie.");
+            }
+            return Short.parseShort(txfAnneeSortie.getText());
         }
     }
 
@@ -1232,6 +1343,9 @@ public class Main extends Application {
         );
 
         private NouvelObjetHaut() {
+
+            gpContenu.setVgap(5);
+
             Label entete = new Label("Nouvel objet d'inventaire");
 
             cbTypeObjet.setOnAction(e -> chargerSection(cbTypeObjet.getSelectionModel().getSelectedIndex()));
@@ -1239,9 +1353,7 @@ public class Main extends Application {
             entete.setFont(new Font(20));
 
             gpContenu.add(entete, 0, 0, 2, 1);
-
             gpContenu.add(new Label("Type d'objet:"), 0, 1);
-
             gpContenu.add(cbTypeObjet, 1, 1);
         }
         private GridPane charger() {
@@ -1252,7 +1364,7 @@ public class Main extends Application {
             return cbTypeObjet.getSelectionModel().getSelectedIndex();
         }
     }
-    //todo aucune valeur à aller chercher, convertir en variable?
+
     private class NouvelObjetBas {
         private final HBox hbContenu = new HBox();
         private final Button btnAjouter = new Button("Ajouter");

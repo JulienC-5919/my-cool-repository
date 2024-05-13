@@ -25,36 +25,16 @@ import javafx.scene.control.TableColumn;
 
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Deprecated
-public class Test extends Application{
+public class Test {
     public static void main(String[] args) {
-        launch();
-    }
-
-    @Override
-    public void start(Stage stage){
-
-        VBox rootFacture = new VBox();
-        TextField imageFacture;
-        imageFacture = new TextField();
-        TextField r = new TextField();
-        Scene scene = new Scene(rootFacture, 200, 200);
-
-        //CorrecteursTextFields.ajouterCorrecteurPrix(r);
-
-        rootFacture.getChildren().addAll(imageFacture,r);
-
-        stage.setScene(scene);
-        stage.setResizable(true);
-
-
-        stage.show();
-
-
+        IllegalArgumentException e = new IllegalArgumentException("r");
+        //e.
     }
 }

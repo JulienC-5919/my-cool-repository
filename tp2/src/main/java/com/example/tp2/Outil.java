@@ -1,19 +1,19 @@
 package com.example.tp2;
 
 public class Outil extends Objet {
-    private int numeroSerie;
+    private String numeroSerie;
     private String modele;
     private String marque;
 
 
     public String getDescription() {
-        return "Marque " + marque + ", " + numeroSerie;
+        return "Marque " + marque + ", Nº de série: " + numeroSerie;
     }
-    public int getNumeroSerie() {
+    public String getNumeroSerie() {
         return numeroSerie;
     }
 
-    public void setNumeroSerie(int numeroSerie) {
+    public void setNumeroSerie(String numeroSerie) {
         this.numeroSerie = numeroSerie;
     }
 

@@ -34,7 +34,7 @@ public class Jeu extends Objet {
         this.developpement = developpement;
     }
 
-    public short getanneeSortie() {
+    public short getAnneeSortie() {
         return anneeSortie;
     }
 

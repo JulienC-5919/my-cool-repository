@@ -10,6 +10,13 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.util.Locale;
 @Deprecated
-public abstract class Tmp {
-    protected int anInt;
+public class Tmp {
+    public static void main(String[] args) {
+
+    }
+
+
+    public static double parseDouble(String s){
+        return Double.parseDouble(s.replaceAll("[ $]", "").replace(',', '.'));
+    }
 }

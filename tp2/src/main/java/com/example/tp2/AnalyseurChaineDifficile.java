@@ -11,6 +11,7 @@ import java.util.Locale;
  * Analyse des chaînes de caractères (String) qui peuvent contenir des erreurs puis les convertit le mieux possible
  * en la valeur demandée, sans lancer d'exception
  */
+@Deprecated
 public final class AnalyseurChaineDifficile {
     private AnalyseurChaineDifficile() {
         throw new UnsupportedOperationException("Cette classe n'est pas instanciable");
