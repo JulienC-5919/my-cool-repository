@@ -194,9 +194,7 @@ public class Main extends Application {
         MenuItem miExporter = new MenuItem("Exporter");
         MenuItem miNouveau = new MenuItem("Nouveau");
 
-        //todo ajouter exporter
         miOuvrir.setOnAction(e -> ouvrirFichier());
-
         miSauvegarder.setOnAction(e -> miSauvegarderAction());
         miSauvegarderSous.setOnAction(e -> sauvegarderSous());
         miExporter.setOnAction(e -> exporter());
@@ -608,9 +606,60 @@ public class Main extends Application {
         }
     }
 
-    //qwertyuiopasdfghjklzxcvbnm
     private void exporter() {
-        //todo exporter
+        File fichierExportation;
+        FileChooser fileChooserExportation = new FileChooser();
+
+        Writer writer;
+        BufferedWriter buffWriter;
+
+        fileChooserExportation.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier texte (*.txt)", "*.txt"));
+
+        fichierExportation = fileChooserExportation.showSaveDialog(stage);
+        if (fichierExportation != null) {
+            try {
+                writer = new FileWriter(fichierExportation);
+                buffWriter = new BufferedWriter(writer);
+
+                if (!listesObjets.livres.isEmpty()) {
+                    buffWriter.write("Livres:\n");
+                    listesObjets.livres.forEach(livre -> {
+                        try {
+                            imprimerLivre(buffWriter, livre);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                if (!listesObjets.outils.isEmpty()) {
+                    buffWriter.write("Outils:\n");
+                    listesObjets.outils.forEach(outil -> {
+                        try {
+                            imprimerOutil(buffWriter, outil);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                if (!listesObjets.jeux.isEmpty()) {
+                    buffWriter.write("Jeux:\n");
+                    listesObjets.jeux.forEach(jeu -> {
+                        try {
+                            imprimerJeu(buffWriter, jeu);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                buffWriter.close();
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -743,6 +792,65 @@ public class Main extends Application {
         public final ArrayList<Livre> livres = new ArrayList<>();
         public final ArrayList<Outil> outils = new ArrayList<>();
         public final ArrayList<Jeu> jeux = new ArrayList<>();
+    }
+
+    /**
+     * Imprime le nom et les caractéristiques générales d'un objet dans un BufferedWriter
+     * @param buffWriter BufferedWriter où écrire les caractéristiques de l'objet
+     * @param objet Objet dont il faut écrire les caractéristiques
+     * @throws IOException si le BufferedWriter est null
+     */
+    private void imprimerSectionGenerale(BufferedWriter buffWriter, Objet objet) throws IOException {
+        buffWriter.write("\n    " + objet.getNom());
+        buffWriter.write("\n        Prix: " + formatteurPrix.format(objet.getPrix()));
+        buffWriter.write("\n        Quantité: " + objet.getQuantite());
+        buffWriter.write("\n        Date d'achat: " + objet.getDateAchat());
+        buffWriter.write("\n        État: " + objet.getEtat().getDisplayName());
+        buffWriter.write("\n        Emplacement: " + objet.getEmplacement());
+    }
+
+    /**
+     * Imprime toutes les caractéristiques d'un  dans un BufferedWriter
+     * @param buffWriter BufferedWriter où écrire les caractéristiques d
+     * @param livre  dont il faut écrire les caractéristiques
+     * @throws IOException si le BufferedWriter est null
+     */
+    private void imprimerLivre(BufferedWriter buffWriter, Livre livre) throws IOException {
+        imprimerSectionGenerale(buffWriter, livre);
+
+        buffWriter.write("\n        Auteur: " + livre.getAuteur());
+        buffWriter.write("\n        Maison d'édition: " + livre.getMaisonEdition());
+        buffWriter.write("\n        Année d'écriture: " + livre.getAnneeEcriture());
+        buffWriter.write("\n        Année de publication: " + livre.getAnneePublication() + "\n\n");
+    }
+
+    /**
+     * Imprime toutes les caractéristiques d'un outil dans un BufferedWriter
+     * @param buffWriter BufferedWriter où écrire les caractéristiques de l'outil
+     * @param outil outil dont il faut écrire les caractéristiques
+     * @throws IOException si le BufferedWriter est null
+     */
+    private void imprimerOutil(BufferedWriter buffWriter, Outil outil) throws IOException{
+        imprimerSectionGenerale(buffWriter, outil);
+
+        buffWriter.write("\n        Marque: " + outil.getMarque());
+        buffWriter.write("\n        Modèle: " + outil.getModele());
+        buffWriter.write("\n        Numéro de série: " + outil.getNumeroSerie() + "\n\n");
+    }
+
+    /**
+     * Imprime toutes les caractéristiques d'un jeu dans un BufferedWriter
+     * @param buffWriter BufferedWriter où écrire les caractéristiques du jeu
+     * @param jeu jeu dont il faut écrire les caractéristiques
+     * @throws IOException si le BufferedWriter est null
+     */
+    private void imprimerJeu(BufferedWriter buffWriter, Jeu jeu) throws IOException {
+        imprimerSectionGenerale(buffWriter, jeu);
+
+        buffWriter.write("\n        Console: " + jeu.getConsole());
+        buffWriter.write("\n        Développement: " + jeu.getDeveloppement());
+        buffWriter.write("\n        Nombre de joueurs: " + jeu.getNbJoueurs());
+        buffWriter.write("\n        Année de sortie: " + jeu.getAnneeSortie() + "\n\n");
     }
 
 ////////////////////////////////// Classes private des sections du tableau de droite ///////////////////////////////////
@@ -1058,7 +1166,7 @@ public class Main extends Application {
 
         private final TextField txfAuteur = new TextField();
         private final TextField txfMaisonEdition = new TextField();
-        private final TextField txfAnneeEcrture = new TextField();
+        private final TextField txfAnneeEcriture = new TextField();
         private final TextField txfAnneePublication = new TextField();
 
         /**
@@ -1072,13 +1180,17 @@ public class Main extends Application {
             Label entete = new Label("Secton livre");
             entete.setFont(new Font(20));
 
-            txfAnneeEcrture.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            txfAnneeEcriture.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        txfAnneeEcrture.setText(txfAnneeEcrture.getText().replaceAll("\\D", ""));
-                        if (txfAnneeEcrture.getText().length() > 4) {
-                            txfAnneeEcrture.setText("9999");
+                    if (!(t1 || txfAnneeEcriture.getText().isEmpty())) {
+                        String annee = txfAnneeEcriture.getText().replaceAll("\\D", "");
+                        if (annee.length() > 4) {
+                            txfAnneeEcriture.setText("9999");
+                        } else if (annee.isEmpty()) {
+                            txfAnneeEcriture.setText("0");
+                        } else {
+                            txfAnneeEcriture.setText(annee);
                         }
                     }
                 }
@@ -1087,10 +1199,14 @@ public class Main extends Application {
             txfAnneePublication.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        txfAnneePublication.setText(txfAnneePublication.getText().replaceAll("\\D", ""));
-                        if (txfAnneePublication.getText().length() > 4) {
+                    if (!(t1 || txfAnneePublication.getText().isEmpty())) {
+                        String annee = txfAnneePublication.getText().replaceAll("\\D", "");
+                        if (annee.length() > 4) {
                             txfAnneePublication.setText("9999");
+                        } else if (annee.isEmpty()) {
+                            txfAnneePublication.setText("0");
+                        } else {
+                            txfAnneePublication.setText(annee);
                         }
                     }
                 }
@@ -1105,7 +1221,7 @@ public class Main extends Application {
 
             gpContenu.add(txfAuteur, 1, 1);
             gpContenu.add(txfMaisonEdition, 1, 2);
-            gpContenu.add(txfAnneeEcrture, 1, 3);
+            gpContenu.add(txfAnneeEcriture, 1, 3);
             gpContenu.add(txfAnneePublication, 1, 4);
         }
 
@@ -1116,7 +1232,7 @@ public class Main extends Application {
         private GridPane charger() {
             txfAuteur.clear();
             txfMaisonEdition.clear();
-            txfAnneeEcrture.clear();
+            txfAnneeEcriture.clear();
             txfAnneePublication.clear();
 
             return gpContenu;
@@ -1130,7 +1246,7 @@ public class Main extends Application {
         private GridPane charger(Livre livre) {
             txfAuteur.setText(livre.getAuteur());
             txfMaisonEdition.setText(livre.getMaisonEdition());
-            txfAnneeEcrture.setText(String.valueOf(livre.getAnneeEcriture()));
+            txfAnneeEcriture.setText(String.valueOf(livre.getAnneeEcriture()));
             txfAnneePublication.setText(String.valueOf(livre.getAnneePublication()));
 
             return gpContenu;
@@ -1149,10 +1265,10 @@ public class Main extends Application {
             return txfMaisonEdition.getText();
         }
         private short getAnneeEcriture() {
-            if (txfAnneeEcrture.getText().isEmpty()) {
+            if (txfAnneeEcriture.getText().isEmpty()) {
                 throw new IllegalArgumentException("Veuillez entrer l'année d'écriture.");
             }
-            return Short.parseShort(txfAnneeEcrture.getText());
+            return Short.parseShort(txfAnneeEcriture.getText());
         }
         private short getAnneePublication() {
             if (txfAnneePublication.getText().isEmpty()) {
@@ -1263,10 +1379,14 @@ public class Main extends Application {
             txfAnneeSortie.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-                    if (!t1) {
-                        txfAnneeSortie.setText(txfAnneeSortie.getText().replaceAll("\\D", ""));
-                        if (txfAnneeSortie.getText().length() > 4) {
+                    if (!(t1 || txfAnneeSortie.getText().isEmpty())) {
+                        String annee = txfAnneeSortie.getText().replaceAll("\\D", "");
+                        if (annee.length() > 4) {
                             txfAnneeSortie.setText("9999");
+                        } else if (annee.isEmpty()) {
+                            txfAnneeSortie.setText("0");
+                        } else {
+                            txfAnneeSortie.setText(annee);
                         }
                     }
                 }
