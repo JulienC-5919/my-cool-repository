@@ -118,7 +118,7 @@ public class Main extends Application {
         root.setRight(new HBox(s, vbMenuDroit));
 
         stage.setMinWidth(1350);
-        stage.setMinHeight(650);
+        stage.setMinHeight(750);
 
         Scene scene = new Scene(root);
 
@@ -260,6 +260,23 @@ public class Main extends Application {
         tvObjets.getColumns().addAll(tcNom, tcDescription, tcEtat, tcDateAchat, tcPrix);
 
         tvObjets.setItems(objets);
+    }
+
+    /**
+     * Prépare le VBox des sections du menu à droite puis les boutons modifier / fermer du menu de modification
+     */
+    private void preparerSectionsDroite() {
+        Button btnModifier = new Button("Modfier");
+        Button btnFermer = new Button("Fermer");
+
+        btnModifier.setOnAction(event -> modifierObjet());
+        btnFermer.setOnAction(event -> fermerObjet());
+
+        hbModifierObjet.setSpacing(5);
+
+        hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
+
+        labObjetInventaire.setFont(new Font(20));
     }
 
     /**
@@ -606,62 +623,6 @@ public class Main extends Application {
         }
     }
 
-    private void exporter() {
-        File fichierExportation;
-        FileChooser fileChooserExportation = new FileChooser();
-
-        Writer writer;
-        BufferedWriter buffWriter;
-
-        fileChooserExportation.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier texte (*.txt)", "*.txt"));
-
-        fichierExportation = fileChooserExportation.showSaveDialog(stage);
-        if (fichierExportation != null) {
-            try {
-                writer = new FileWriter(fichierExportation);
-                buffWriter = new BufferedWriter(writer);
-
-                if (!listesObjets.livres.isEmpty()) {
-                    buffWriter.write("Livres:\n");
-                    listesObjets.livres.forEach(livre -> {
-                        try {
-                            imprimerLivre(buffWriter, livre);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-
-                if (!listesObjets.outils.isEmpty()) {
-                    buffWriter.write("Outils:\n");
-                    listesObjets.outils.forEach(outil -> {
-                        try {
-                            imprimerOutil(buffWriter, outil);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-
-                if (!listesObjets.jeux.isEmpty()) {
-                    buffWriter.write("Jeux:\n");
-                    listesObjets.jeux.forEach(jeu -> {
-                        try {
-                            imprimerJeu(buffWriter, jeu);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-
-                buffWriter.close();
-                writer.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     /**
      * Affiche les détails de l'objet sélectionné du TableView dans le menu droit
      * @param objet objet à afficher
@@ -680,23 +641,6 @@ public class Main extends Application {
         }
 
         vbMenuDroit.getChildren().add(hbModifierObjet);
-    }
-
-    /**
-     * Prépare le VBox des sections du menu à droite puis les boutons modifier / fermer du menu de modification todo boutons dans une classe?
-     */
-    private void preparerSectionsDroite() {
-        Button btnModifier = new Button("Modfier");
-        Button btnFermer = new Button("Fermer");
-
-        btnModifier.setOnAction(event -> modifierObjet());
-        btnFermer.setOnAction(event -> fermerObjet());
-
-        hbModifierObjet.setSpacing(5);
-
-        hbModifierObjet.getChildren().addAll(btnModifier, btnFermer);
-
-        labObjetInventaire.setFont(new Font(20));
     }
 
     /**
@@ -779,10 +723,73 @@ public class Main extends Application {
         }
     }
 
+    /**
+     * Prépare formatteurPrix
+     */
     private void preparerFormatteurPrix() {
         formatteurPrix.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.CANADA_FRENCH));
         formatteurPrix.setGroupingSize(3);
         formatteurPrix.setGroupingUsed(true);
+    }
+
+    /**
+     * Exporte les objets en fichier txt
+     */
+    private void exporter() {
+        File fichierExportation;
+        FileChooser fileChooserExportation = new FileChooser();
+
+        Writer writer;
+        BufferedWriter buffWriter;
+
+        fileChooserExportation.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier texte (*.txt)", "*.txt"));
+
+        fichierExportation = fileChooserExportation.showSaveDialog(stage);
+        if (fichierExportation != null) {
+
+            try {
+                writer = new FileWriter(fichierExportation);
+                buffWriter = new BufferedWriter(writer);
+
+                if (!listesObjets.livres.isEmpty()) {
+                    buffWriter.write("Livres:\n");
+                    listesObjets.livres.forEach(livre -> {
+                        try {
+                            imprimerLivre(buffWriter, livre);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                if (!listesObjets.outils.isEmpty()) {
+                    buffWriter.write("Outils:\n");
+                    listesObjets.outils.forEach(outil -> {
+                        try {
+                            imprimerOutil(buffWriter, outil);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                if (!listesObjets.jeux.isEmpty()) {
+                    buffWriter.write("Jeux:\n");
+                    listesObjets.jeux.forEach(jeu -> {
+                        try {
+                            imprimerJeu(buffWriter, jeu);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+
+                buffWriter.close();
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -1195,7 +1202,7 @@ public class Main extends Application {
                     }
                 }
             });
-//todo 0 si réponse invalide
+
             txfAnneePublication.focusedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
@@ -1465,6 +1472,7 @@ public class Main extends Application {
         private NouvelObjetHaut() {
 
             gpContenu.setVgap(5);
+            gpContenu.setHgap(5);
 
             Label entete = new Label("Nouvel objet d'inventaire");
 
@@ -1486,7 +1494,7 @@ public class Main extends Application {
     }
 
     private class NouvelObjetBas {
-        private final HBox hbContenu = new HBox();
+        private final HBox hbContenu = new HBox(5);
         private final Button btnAjouter = new Button("Ajouter");
         private NouvelObjetBas() {
             Button btnAnnuler = new Button("Annuler");
